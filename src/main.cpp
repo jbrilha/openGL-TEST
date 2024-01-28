@@ -235,7 +235,7 @@ int main(int argc, char *argv[]) {
                 model = glm::translate(model, cubePositions[i]);
 
                 float angle = 20.f * i;
-                if(track) {
+                if(track && i % 3 == 0) {
                     std::cout << "\r"
                         << " x: " << camera.position.x << std::setprecision(4) << std::fixed 
                         << " y: " << camera.position.y << std::setprecision(4) << std::fixed
@@ -246,14 +246,12 @@ int main(int argc, char *argv[]) {
                     glm::vec3 right = glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), direction));
                     glm::vec3 up = glm::cross(direction, right);
 
-                    glm::mat4 rotationMatrix = glm::mat4(
+                    model = glm::mat4(
                         glm::vec4(right, 0.0f),
                         glm::vec4(up, 0.0f),
-                        glm::vec4(-direction, 0.0f),
+                        glm::vec4(direction, 0.0f),
                         glm::vec4(cubePositions[i], 1.0f)
                     );
-
-                    model = rotationMatrix;
                 }
                 else
                     model = glm::rotate(model, angle, glm::vec3(0.f, 1.f, 0.f));
@@ -285,9 +283,6 @@ void process_input(GLFWwindow *window) {
         camera.sprint(true);
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE)
         camera.sprint(false);
-
-    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
-        track = !track;
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.handle_keyboard(FORWARD, delta_time);
@@ -359,6 +354,8 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action,
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     
+    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
+        track = !track;
     if (key == GLFW_KEY_P && action == GLFW_PRESS)
         paused = !paused;
 }
