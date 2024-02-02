@@ -1,6 +1,4 @@
-#include <cmath>
 #include <cstdlib>
-#include <iomanip>
 #include <iostream>
 #include <stddef.h>
 #include <stdio.h>
@@ -55,7 +53,8 @@ float delta_time = 0.f;
 float last_frame = 0.f;
 
 bool track = false;
-// glm::mat4 projection = glm::mat4(1.0f);
+bool chase = false;
+glm::mat4 projection = glm::perspective(glm::radians(camera.zoom), (float) width / (float) height, 0.1f, 100.0f);
 
 int main(int argc, char *argv[]) {
 
@@ -69,8 +68,16 @@ int main(int argc, char *argv[]) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
+    const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+
+    // width = mode->width;
+    // height = mode->height;
+
+    // std::cout << window_width << "x" << window_height << std::endl;
+
     GLFWwindow *window =
         glfwCreateWindow(width, height, GAME_VERSION_NAME.c_str(), NULL, NULL);
+
 
     if (!window) {
         std::cout << "Failed to initialize GLFW" << std::endl;
@@ -88,6 +95,7 @@ int main(int argc, char *argv[]) {
     glfwSetScrollCallback(window, mouse_scroll_callback);
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    // glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
     glfwMakeContextCurrent(window);
     // gladLoadGL();
@@ -154,17 +162,17 @@ int main(int argc, char *argv[]) {
           15.f, 0.f,  15.f, 0.f, 0.f, 0.f,
     };
 
-    glm::vec3 cubePositions[] = {
-        glm::vec3( 0.0f,  0.0f,  0.0f),
+    glm::vec3 cube_positions[] = {
+        glm::vec3( 5.0f,  6.0f,  -3.0f),
         glm::vec3( 2.0f,  5.0f, -15.0f),
-        glm::vec3(-1.5f, 2.2f, -2.5f),
-        glm::vec3(-3.8f, 2.0f, -12.3f),
+        glm::vec3(-7.f, 2.2f, -2.5f),
+        glm::vec3(-3.8f, 6.0f, -12.3f),
         glm::vec3( 2.4f, 3.f, -3.5f),
         glm::vec3(-1.7f,  3.0f, -7.5f),
         glm::vec3( 1.3f, 2.0f, -2.5f),
-        glm::vec3( 1.5f,  2.0f, -2.5f),
+        glm::vec3( 5.f,  2.0f, -2.5f),
         glm::vec3( 1.5f,  5.f, -1.5f),
-        glm::vec3(-1.3f,  1.0f, -1.5f)
+        glm::vec3(-6.f,  10.0f, -1.5f)
     };
 
     unsigned int VBO[2], VAO[2]; /*, EBO*/; // vertex buffer object, vertex array
@@ -201,6 +209,8 @@ int main(int argc, char *argv[]) {
     while (!glfwWindowShouldClose(window)) {
         if(!paused) {
             process_input(window); // using callback instead
+            camera.move();
+
             float current_frame = static_cast<float>(glfwGetTime());
             delta_time = current_frame - last_frame;
             last_frame = current_frame;
@@ -214,9 +224,8 @@ int main(int argc, char *argv[]) {
             glClearColor(0.4f, 0.4f, 0.4f, 1.f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    shader_program.use();
+            shader_program.use();
 
-            glm::mat4 projection = glm::perspective(glm::radians(camera.zoom), (float) width / (float) height, 0.1f, 100.0f);
             shader_program.set_mat4("projection", projection);
 
             // glm::mat4 view = glm::lookAt(camera.position, glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f));
@@ -232,26 +241,31 @@ int main(int argc, char *argv[]) {
             glBindVertexArray(VAO[0]);
             for (unsigned int i = 0; i < 10; i++) {
                 model = glm::mat4(1.0f);
-                model = glm::translate(model, cubePositions[i]);
+                model = glm::translate(model, cube_positions[i]);
 
                 float angle = 20.f * i;
-                if(track && i % 3 == 0) {
-                    std::cout << "\r"
-                        << " x: " << camera.position.x << std::setprecision(4) << std::fixed 
-                        << " y: " << camera.position.y << std::setprecision(4) << std::fixed
-                        << " z: " << camera.position.z << std::setprecision(4) << std::fixed << std::flush;
+                if(track) {
 
-                    glm::vec3 direction = glm::normalize(camera.position - cubePositions[i]);
+                    glm::vec3 direction = glm::normalize(camera.position - cube_positions[i]);
 
-                    glm::vec3 right = glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), direction));
+                    glm::vec3 right = glm::normalize(glm::cross(camera.world_up, direction));
                     glm::vec3 up = glm::cross(direction, right);
+
+                    if(chase && i % 3 == 0) {
+                        std::cout << "chasing" << std::endl;
+                        cube_positions[i] += direction * 0.1f;
+                        model = glm::translate(glm::mat4(1.f), cube_positions[i]);
+                    }
 
                     model = glm::mat4(
                         glm::vec4(right, 0.0f),
                         glm::vec4(up, 0.0f),
                         glm::vec4(direction, 0.0f),
-                        glm::vec4(cubePositions[i], 1.0f)
+                        glm::vec4(cube_positions[i], 1.0f)
                     );
+
+                    if(chase && i % 3 == 0)
+                        model = glm::scale(model, glm::vec3(0.1f));
                 }
                 else
                     model = glm::rotate(model, angle, glm::vec3(0.f, 1.f, 0.f));
@@ -260,6 +274,11 @@ int main(int argc, char *argv[]) {
 
                 glDrawArrays(GL_TRIANGLES, 0, 36);
             }
+
+                    // std::cout << "\r"
+                    //     << " x: " << camera.position.x << std::setprecision(4) << std::fixed 
+                    //     << " y: " << camera.position.y << std::setprecision(4) << std::fixed
+                    //     << " z: " << camera.position.z << std::setprecision(4) << std::fixed << std::flush;
         }
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -279,37 +298,67 @@ void process_input(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-        camera.sprint(true);
-    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE)
-        camera.sprint(false);
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        camera.handle_keyboard(FORWARD, delta_time, glfwGetTime());
+        camera.moving = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        camera.handle_keyboard(LEFT, delta_time, glfwGetTime());
+        camera.moving = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        camera.handle_keyboard(BACKWARDS, delta_time, glfwGetTime());
+        camera.moving = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        camera.handle_keyboard(RIGHT, delta_time, glfwGetTime());
+        camera.moving = true;
+    }
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.handle_keyboard(FORWARD, delta_time);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.handle_keyboard(LEFT, delta_time);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.handle_keyboard(BACKWARDS, delta_time);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.handle_keyboard(RIGHT, delta_time);
-
-
-    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS/*  || glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS */)
-        camera.crouch(true);
-    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_RELEASE /* || glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_RELEASE */)
-        camera.crouch(false);
-
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        camera.jump(true);
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE)
-        camera.jump(false);
+    // GLFW_RELEASE doesn't actually check for release action in this case,
+    // just means that the key is not being pressed atm
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE
+        && glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE
+        && glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE
+        && glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE) {
+        camera.moving = false;
+    }
 }
 
+static void key_callback(GLFWwindow *window, int key, int scancode, int action,
+                         int mods) {
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+    
+    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
+        track = !track;
+
+    if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS) {
+        camera.sprinting = !camera.sprinting;
+    }
+    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+        camera.jumping = true;
+    }
+    if (key == GLFW_KEY_C && action == GLFW_PRESS) {
+        camera.crouching = !camera.crouching;
+    }
+    if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
+        camera.proning = !camera.proning;
+    }
+    // if ((key == GLFW_KEY_W || key == GLFW_KEY_A || key == GLFW_KEY_S || key == GLFW_KEY_D) && action == GLFW_PRESS) {
+    //     camera.moving = true;
+    // }
+
+    if (key == GLFW_KEY_P && action == GLFW_PRESS)
+        paused = !paused;
+    if (key == GLFW_KEY_X && action == GLFW_PRESS)
+        chase = !chase;
+}
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height);
-    // projection = glm::perspective(glm::radians(90.0f), (float) width / (float) height,
-                                      // 0.1f, 100.0f);
+    
+    projection = glm::perspective(glm::radians(camera.zoom), (float) width / (float) height, 0.1f, 100.0f);
 }
 
 static void mouse_scroll_callback(GLFWwindow *window, double x_offset, double y_offset) {
@@ -349,16 +398,6 @@ static void error_callback(int error, const char *description) {
     fprintf(stderr, "Error: %s\n", description);
 }
 
-static void key_callback(GLFWwindow *window, int key, int scancode, int action,
-                         int mods) {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
-    
-    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
-        track = !track;
-    if (key == GLFW_KEY_P && action == GLFW_PRESS)
-        paused = !paused;
-}
 
 void display_FPS(GLFWwindow *window, double current_time) {
     std::string NAME_FPS =

@@ -1,11 +1,11 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include <algorithm>
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
+#include <iomanip>
 
 enum camera_movement { FORWARD, BACKWARDS, RIGHT, LEFT };
 
@@ -17,18 +17,34 @@ const float ZOOM = 45.f;
 
 class Camera {
   public:
+    float floating_point_error_solver = 0.000001f;
+
     glm::vec3 position;
+
+    bool moving;
+    bool jumping;
+    bool falling;
+    bool crouching;
+    bool proning;
+    bool sprinting;
 
     float JUMP_HEIGHT_MODIFIER      = 4.f;
     float CROUCH_HEIGHT_MODIFIER    = 1.f;
-    float SPRINT_SPEED_MODIFIER     = 2.5f;
-    float CROUCH_SPEED_MODIFIER     = 0.5f;
+    float PRONE_HEIGHT              = 1.f;
 
+    float SPRINT_SPEED_MULTIPLIER     = 2.f;
+    float CROUCH_SPEED_MULTIPLIER     = 1.f/3.f;
+    float PRONE_SPEED_MULTIPLIER     = 0.2f;
 
     float default_eye_level;
     float eye_level;
+
+    float bob_frequency = 15.f;
+    float bob_height = 0.02f;
+    float bob_amount = 0.f;
     float max_jump_height;
     float crouch_height;
+    float prone_height = 1.f + floating_point_error_solver;
 
     glm::vec3 front;
     glm::vec3 up;
@@ -42,6 +58,7 @@ class Camera {
     float move_speed;
     float sprint_speed;
     float crouch_speed;
+    float prone_speed = 5.f;
 
     float mouse_sens;
     float zoom;
@@ -57,11 +74,11 @@ class Camera {
 
         this->eye_level         = default_eye_level;
         this->max_jump_height   = default_eye_level + JUMP_HEIGHT_MODIFIER;
-        this->crouch_height     = default_eye_level - CROUCH_HEIGHT_MODIFIER;
+        this->crouch_height     = default_eye_level - CROUCH_HEIGHT_MODIFIER + floating_point_error_solver;
 
         this->move_speed    = default_move_speed;
-        this->sprint_speed  = default_move_speed * SPRINT_SPEED_MODIFIER;
-        this->crouch_speed  = default_move_speed * CROUCH_SPEED_MODIFIER;
+        this->sprint_speed  = default_move_speed * SPRINT_SPEED_MULTIPLIER;
+        this->crouch_speed  = default_move_speed * CROUCH_SPEED_MULTIPLIER;
 
         this->yaw = yaw;
         this->pitch = pitch;
@@ -78,11 +95,11 @@ class Camera {
 
         this->eye_level         = default_eye_level;
         this->max_jump_height   = default_eye_level + JUMP_HEIGHT_MODIFIER;
-        this->crouch_height     = default_eye_level - CROUCH_HEIGHT_MODIFIER;
+        this->crouch_height     = default_eye_level - CROUCH_HEIGHT_MODIFIER + floating_point_error_solver;
 
         this->move_speed    = default_move_speed;
-        this->sprint_speed  = default_move_speed * SPRINT_SPEED_MODIFIER;
-        this->crouch_speed  = default_move_speed * CROUCH_SPEED_MODIFIER;
+        this->sprint_speed  = default_move_speed * SPRINT_SPEED_MULTIPLIER;
+        this->crouch_speed  = default_move_speed * CROUCH_SPEED_MULTIPLIER;
 
         this->yaw = yaw;
         this->pitch = pitch;
@@ -93,46 +110,111 @@ class Camera {
         return glm::lookAt(position, position + front, up);
     }
 
-    void jump(bool jumping) {
+    void move() {
+        float bob_tolerance = 0.02f;
+        if(!moving) { 
+            move_speed = 0;
+            sprinting = false;
+            if(position.y > eye_level) {
+                position.y -= bob_tolerance;
+            }
+            if (position.y < eye_level){
+                position.y += bob_tolerance;
+            }
+            // if(position.y < eye_level + bob_tolerance && position.y > eye_level - bob_tolerance)
+            //     position.y = eye_level;
+        }
+
         if(jumping) {
-            if(position.y < max_jump_height) {
+            if(crouching) crouching = false;
+
+            if(eye_level < max_jump_height) {
                 eye_level += 0.25f;
                 position.y = eye_level;
             }
+            if(eye_level >= max_jump_height) {
+                eye_level = max_jump_height; //needed so there's no twitching when landing from crouch-jump
+                jumping = false;
+                falling = true;
+            }
         }
         else {
-            if(position.y > default_eye_level) {
+            if(eye_level > default_eye_level) {
                 eye_level -= 0.25f;
                 position.y = eye_level;
             }
-        }
-    }
-    void crouch(bool crouching) {
-        if(crouching) {
-            if(position.y > crouch_height) {
-                    eye_level -= 0.1f;
-                    position.y = eye_level;
+            if(eye_level == default_eye_level) {
+                falling = false;
             }
-            move_speed = crouch_speed;
+        }
+
+        // if(proning) {
+        //     crouching = false;
+        //     if(eye_level > prone_height) {
+        //         eye_level -= 0.1f;
+        //         position.y = eye_level;
+        //     }
+        //     move_speed = prone_speed;
+        // }
+        // else {
+        //     if(eye_level < default_eye_level) {
+        //         eye_level += 0.1f;
+        //         position.y = eye_level;
+        //     }
+        //     move_speed = default_move_speed;
+        // }
+
+        if(crouching) {
+            if(!falling && eye_level > crouch_height) {
+                eye_level -= 0.1f;
+                position.y = eye_level;
+            }
+            bob_frequency = 10.f;
+            bob_height = 0.05f;
+
+            if(sprinting) {
+                move_speed = crouch_speed * SPRINT_SPEED_MULTIPLIER;
+            }
+            else {
+                move_speed = crouch_speed;
+            }
         }
         else {
-            if(position.y < default_eye_level) {
+            if(!proning && eye_level < default_eye_level) {
                     eye_level += 0.1f;
                     position.y = eye_level;
             }
-            move_speed = default_move_speed;
+            bob_height = 0.02f;
+
+            if(sprinting) {
+                bob_frequency = 15.f;
+                move_speed = sprint_speed;
+            }
+            else {
+                bob_frequency = 12.f;
+                move_speed = default_move_speed;
+            }
         }
-    }
-    void sprint(bool sprinting) {
-        if(sprinting) {
-            move_speed = sprint_speed;
-        }
-        else {
-            move_speed = default_move_speed;
-        }
+
+        std::cout << "\r"
+            << " x: " << position.x << std::setprecision(4) << std::fixed 
+            << " y: " << position.y << std::setprecision(4) << std::fixed
+            << " z: " << position.z << std::setprecision(4) << std::fixed << std::flush;
     }
 
-    void handle_keyboard(camera_movement direction, float delta_time) {
+    // void view_bob() {
+    //     if(bob_up) {
+    //         eye_level += 0.01f;
+    //         bob_up = false;
+    //     }
+    //     else {
+    //         eye_level -= 0.01f;
+    //         bob_up = true;
+    //     }
+    //
+    // }
+
+    void handle_keyboard(camera_movement direction, float delta_time, float time_var) {
         float velocity = move_speed * delta_time;
 
         // TODO: movement is stupid slow when looking directly up or down
@@ -142,7 +224,9 @@ class Camera {
             case RIGHT:     position += right * velocity; break;
             case LEFT:      position -= right * velocity; break;
             }
-        position.y = eye_level;
+
+        bob_amount = sin(time_var * bob_frequency) * move_speed * bob_height;
+        position.y = eye_level + bob_amount;
     }
 
     void handle_mouse_move(float x_offset, float y_offset,
