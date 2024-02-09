@@ -54,7 +54,10 @@ float last_frame = 0.f;
 
 bool track = false;
 bool chase = false;
-glm::mat4 projection = glm::perspective(glm::radians(camera.zoom), (float) width / (float) height, 0.1f, 100.0f);
+
+float near = 0.1f;
+float far = 100.f;
+glm::mat4 projection = glm::perspective(glm::radians(camera.zoom), (float) width / (float) height, near, far);
 
 int main(int argc, char *argv[]) {
 
@@ -68,7 +71,7 @@ int main(int argc, char *argv[]) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    // const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
     // width = mode->width;
     // height = mode->height;
@@ -88,7 +91,6 @@ int main(int argc, char *argv[]) {
     // set callback functions
     glfwSetErrorCallback(error_callback);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
     glfwSetKeyCallback(window, key_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetCursorPosCallback(window, mouse_move_callback);
@@ -196,6 +198,7 @@ int main(int argc, char *argv[]) {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
                           (void *)0);
     glEnableVertexAttribArray(0);
+    //colors defined here I think
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
                           (void *)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
@@ -205,6 +208,7 @@ int main(int argc, char *argv[]) {
     glEnable(GL_DEPTH_TEST);
 
     shader_program.use();
+
 
     while (!glfwWindowShouldClose(window)) {
         if(!paused) {
@@ -345,9 +349,6 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action,
     if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
         camera.proning = !camera.proning;
     }
-    // if ((key == GLFW_KEY_W || key == GLFW_KEY_A || key == GLFW_KEY_S || key == GLFW_KEY_D) && action == GLFW_PRESS) {
-    //     camera.moving = true;
-    // }
 
     if (key == GLFW_KEY_P && action == GLFW_PRESS)
         paused = !paused;
@@ -358,7 +359,7 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action,
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height);
     
-    projection = glm::perspective(glm::radians(camera.zoom), (float) width / (float) height, 0.1f, 100.0f);
+    projection = glm::perspective(glm::radians(camera.zoom), (float) width / (float) height, near, far);
 }
 
 static void mouse_scroll_callback(GLFWwindow *window, double x_offset, double y_offset) {
