@@ -165,22 +165,6 @@ class Camera {
             }
         }
 
-        // if(proning) {
-        //     crouching = false;
-        //     if(eye_level > prone_height) {
-        //         eye_level -= 0.1f;
-        //         position.y = eye_level;
-        //     }
-        //     move_speed = prone_speed;
-        // }
-        // else {
-        //     if(eye_level < default_eye_level) {
-        //         eye_level += 0.1f;
-        //         position.y = eye_level;
-        //     }
-        //     move_speed = default_move_speed;
-        // }
-
         std::cout << "\r"
             << " x: " << position.x << std::setprecision(4) << std::fixed 
             << " y: " << position.y << std::setprecision(4) << std::fixed
