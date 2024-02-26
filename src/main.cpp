@@ -8,6 +8,7 @@
 #include "glm/fwd.hpp"
 #include "shaders.h"
 #include "camera.h"
+#include "cube.h"
 
 #define GLAD_GL_IMPLEMENTATION
 #include <glad/glad.h>
@@ -28,6 +29,9 @@ static void mouse_button_callback(GLFWwindow *window, int button, int action,
 static void mouse_scroll_callback(GLFWwindow *window, double x_offset, double y_offset);
 static void mouse_move_callback(GLFWwindow *window, double x_pos_in, double y_pos_in);
 static void display_FPS(GLFWwindow *window, double current_time);
+void grid(Shader shader_program, unsigned int VAO, int i, int j);
+void draw_floor(Shader shader_program, unsigned int VAO);
+glm::mat4 track_camera(glm::mat4 model, glm::vec3 position, int i);
 
 std::string GAME_NAME = "TESTING";
 std::string VERSION = "v0.0.1";
@@ -57,7 +61,7 @@ bool chase = false;
 
 float near = 0.1f;
 float far = 100.f;
-glm::mat4 projection = glm::perspective(glm::radians(camera.zoom), (float) width / (float) height, near, far);
+glm::mat4 projection; // = glm::perspective(glm::radians(camera.zoom), (float) width / (float) height, near, far);
 
 int main(int argc, char *argv[]) {
 
@@ -71,14 +75,19 @@ int main(int argc, char *argv[]) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    // const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
-    // width = mode->width;
-    // height = mode->height;
+    int window_width = mode->width;
+    int window_height = mode->height;
 
-    // std::cout << window_width << "x" << window_height << std::endl;
+    // width = window_width;
+    // height = window_height;
+    projection = glm::perspective(glm::radians(camera.zoom), (float) width / (float) height, near, far);
+
+    std::cout << window_width << "x" << window_height << " | " << width << "x" << height << std::endl;
 
     GLFWwindow *window =
+        // glfwCreateWindow(width, height, GAME_VERSION_NAME.c_str(), glfwGetPrimaryMonitor(), NULL);
         glfwCreateWindow(width, height, GAME_VERSION_NAME.c_str(), NULL, NULL);
 
 
@@ -110,58 +119,17 @@ int main(int argc, char *argv[]) {
     }
 
     Shader shader_program("shaders/shader.vert", "shaders/shader.frag");
+    Cube cube;
+    // cube.init();
 
-    float cube[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 1.f,
-         0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 1.f,
-         0.5f,  0.5f, -0.5f,  0.0f, 0.0f, 1.f,
-         0.5f,  0.5f, -0.5f,  0.0f, 0.0f, 1.f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 0.0f, 1.f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 1.f,
-
-        -0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 0.f,
-         0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 0.f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.f,
-        -0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 0.f,
-
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.f,
-        -0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.f,
-        -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.f,
-        -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.f,
-        -0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.f,
-
-         0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 1.f,
-         0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 1.f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 1.f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 1.f,
-         0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 1.f,
-         0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 1.f,
-
-        -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 1.f,
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 1.f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 1.f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 1.f,
-        -0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 1.f,
-        -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 1.f,
-
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.f,
-         0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.f,
-         0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.f,
-         0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.f,
-    };
     float floor[] = {
-          15.f, 0.f, -15.f, 0.5f, 0.5f, 0.5f,
-         -15.f, 0.f, -15.f, 0.5f, 0.5f, 0.5f, // right to left far
-          15.f, 0.f,  15.f, 0.5f, 0.5f, 0.5f,
+          3.f, 0.f, -3.f, 0.5f, 0.5f, 0.5f,
+         -3.f, 0.f, -3.f, 0.5f, 0.5f, 0.5f, // right to left far
+          3.f, 0.f,  3.f, 0.5f, 0.5f, 0.5f,
 
-         -15.f, 0.f,  15.f, 0.f, 0.f, 0.f,
-         -15.f, 0.f, -15.f, 0.f, 0.f, 0.f,
-          15.f, 0.f,  15.f, 0.f, 0.f, 0.f,
+         -3.f, 0.f,  3.f, 0.f, 0.f, 0.f,
+         -3.f, 0.f, -3.f, 0.f, 0.f, 0.f,
+          3.f, 0.f,  3.f, 0.f, 0.f, 0.f,
     };
 
     glm::vec3 cube_positions[] = {
@@ -177,23 +145,13 @@ int main(int argc, char *argv[]) {
         glm::vec3(-6.f,  10.0f, -1.5f)
     };
 
-    unsigned int VBO[2], VAO[2]; /*, EBO*/; // vertex buffer object, vertex array
+    unsigned int VBO, VAO; /*, EBO*/; // vertex buffer object, vertex array
                                      // object, element buffer object
-    glGenBuffers(2, VBO);
-    glGenVertexArrays(2, VAO);
+    glGenBuffers(1, &VBO);
+    glGenVertexArrays(1, &VAO);
 
-    glBindVertexArray(VAO[0]);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cube), cube, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
-                          (void *)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
-                          (void *)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    glBindVertexArray(VAO[1]);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(floor), floor, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
                           (void *)0);
@@ -202,13 +160,10 @@ int main(int argc, char *argv[]) {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
                           (void *)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
-    // glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, 0.1f, 100.0f);
 
     glEnable(GL_DEPTH_TEST);
 
-    shader_program.use();
-
+    // shader_program.use();
 
     while (!glfwWindowShouldClose(window)) {
         if(!paused) {
@@ -218,7 +173,6 @@ int main(int argc, char *argv[]) {
             float current_frame = static_cast<float>(glfwGetTime());
             delta_time = current_frame - last_frame;
             last_frame = current_frame;
-            // std::cout << "\r" << delta_time << std::endl;
 
             double current_time = glfwGetTime();
             nb_frames++;
@@ -232,70 +186,63 @@ int main(int argc, char *argv[]) {
 
             shader_program.set_mat4("projection", projection);
 
-            // glm::mat4 view = glm::lookAt(camera.position, glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f));
             glm::mat4 view = camera.get_view_matrix();
             shader_program.set_mat4("view", view);
 
-            glm::mat4 model = glm::mat4(1.0f);
-            shader_program.set_mat4("model", model);
+            glm::mat4 model;
 
-            glBindVertexArray(VAO[1]);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
+            draw_floor(shader_program, VAO);
 
-            glBindVertexArray(VAO[0]);
             for (unsigned int i = 0; i < 10; i++) {
                 model = glm::mat4(1.0f);
                 model = glm::translate(model, cube_positions[i]);
 
                 float angle = 20.f * i;
                 if(track) {
-
-                    glm::vec3 direction = glm::normalize(camera.position - cube_positions[i]);
-
-                    glm::vec3 right = glm::normalize(glm::cross(camera.world_up, direction));
-                    glm::vec3 up = glm::cross(direction, right);
-
-                    if(chase && i % 3 == 0) {
-                        std::cout << "chasing" << std::endl;
-                        cube_positions[i] += direction * 0.1f;
-                        model = glm::translate(glm::mat4(1.f), cube_positions[i]);
-                    }
-
-                    model = glm::mat4(
-                        glm::vec4(right, 0.0f),
-                        glm::vec4(up, 0.0f),
-                        glm::vec4(direction, 0.0f),
-                        glm::vec4(cube_positions[i], 1.0f)
-                    );
-
-                    if(chase && i % 3 == 0)
-                        model = glm::scale(model, glm::vec3(0.1f));
+                    model = track_camera(model, cube_positions[i], i);
                 }
-                else
-                    model = glm::rotate(model, angle, glm::vec3(0.f, 1.f, 0.f));
 
                 shader_program.set_mat4("model", model);
 
-                glDrawArrays(GL_TRIANGLES, 0, 36);
+                if(chase && i % 3 == 0)
+                    cube.draw(shader_program, GL_LINES);
+                else
+                    cube.draw(shader_program, GL_TRIANGLES);
             }
-
-                    // std::cout << "\r"
-                    //     << " x: " << camera.position.x << std::setprecision(4) << std::fixed 
-                    //     << " y: " << camera.position.y << std::setprecision(4) << std::fixed
-                    //     << " z: " << camera.position.z << std::setprecision(4) << std::fixed << std::flush;
         }
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
     // cleanup
-    glDeleteVertexArrays(2, VAO);
-    glDeleteBuffers(2, VBO);
+    // glDeleteVertexArrays(2, VAO);
+    // glDeleteBuffers(2, VBO);
     glDeleteProgram(shader_program.program_ID);
     glfwDestroyWindow(window);
 
     glfwTerminate();
     exit(EXIT_SUCCESS);
+}
+
+glm::mat4 track_camera(glm::mat4 model, glm::vec3 position, int i) {
+
+    glm::vec3 direction = glm::normalize(camera.position - position);
+
+    glm::vec3 right = glm::normalize(glm::cross(camera.world_up, direction));
+    glm::vec3 up = glm::cross(direction, right);
+
+    if(chase && i % 3 == 0) {
+        std::cout << "chasing" << std::endl;
+        position += direction * 0.1f;
+        model = glm::translate(glm::mat4(1.f), position);
+    }
+
+    return glm::mat4(
+        glm::vec4(right, 0.0f),
+        glm::vec4(up, 0.0f),
+        glm::vec4(direction, 0.0f),
+        glm::vec4(position, 1.0f)
+    );
 }
 
 void process_input(GLFWwindow *window) {
@@ -408,5 +355,36 @@ void display_FPS(GLFWwindow *window, double current_time) {
     last_time = current_time;
 
     glfwSetWindowTitle(window, NAME_FPS.c_str());
+}
+void grid(Shader shader_program, unsigned int VAO, int i, int j) {
+    glm::mat4 model;
+    glBindVertexArray(VAO);
+
+    for(int n = 0; n < 4; n++) {
+        model = glm::mat4(1.0f);
+
+        if(n % 2 == 0) {
+            i *= -1;
+        }
+        else {
+            j *= -1;
+        }
+
+        model = glm::translate(model, glm::vec3(6.f * j, 0.f, 6.f * i));
+        shader_program.set_mat4("model", model);
+
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+    }
+
+}
+
+void draw_floor(Shader shader_program, unsigned int VAO){
+    
+    for(int i = 0; i < 10; i++) {
+        for(int j = 0; j < 10; j++) {
+            grid(shader_program, VAO, i, j);
+        }
+    }
+
 }
 //! [code]
