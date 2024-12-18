@@ -9,6 +9,7 @@
 #include "shaders.h"
 #include "camera.h"
 #include "cube.h"
+#include "square.h"
 
 #define GLAD_GL_IMPLEMENTATION
 #include <glad/glad.h>
@@ -31,7 +32,7 @@ static void mouse_move_callback(GLFWwindow *window, double x_pos_in, double y_po
 static void display_FPS(GLFWwindow *window, double current_time);
 void grid(Shader shader_program, unsigned int VAO, int i, int j);
 void draw_floor(Shader shader_program, unsigned int VAO);
-glm::mat4 track_camera(glm::mat4 model, glm::vec3 position, int i);
+glm::mat4 track_camera(glm::mat4 model, glm::vec3 *position, int i);
 
 std::string GAME_NAME = "TESTING";
 std::string VERSION = "v0.0.1";
@@ -120,6 +121,7 @@ int main(int argc, char *argv[]) {
 
     Shader shader_program("shaders/shader.vert", "shaders/shader.frag");
     Cube cube;
+    Square square;
     // cube.init();
 
     float floor[] = {
@@ -199,15 +201,20 @@ int main(int argc, char *argv[]) {
 
                 float angle = 20.f * i;
                 if(track) {
-                    model = track_camera(model, cube_positions[i], i);
+                    model = track_camera(model, &cube_positions[i], i);
                 }
 
                 shader_program.set_mat4("model", model);
 
-                if(chase && i % 3 == 0)
-                    cube.draw(shader_program, GL_LINES);
-                else
+                // if(chase && i % 3 == 0)
+                //     cube.draw(shader_program, GL_LINES);
+                // else
                     cube.draw(shader_program, GL_TRIANGLES);
+
+                model = glm::translate(model, glm::vec3(0.f, 1.f, 0.f));
+                shader_program.set_mat4("model", model);
+
+                square.draw(shader_program, GL_TRIANGLES);
             }
         }
         glfwSwapBuffers(window);
@@ -224,24 +231,24 @@ int main(int argc, char *argv[]) {
     exit(EXIT_SUCCESS);
 }
 
-glm::mat4 track_camera(glm::mat4 model, glm::vec3 position, int i) {
+glm::mat4 track_camera(glm::mat4 model, glm::vec3 *position, int i) {
 
-    glm::vec3 direction = glm::normalize(camera.position - position);
+    glm::vec3 direction = glm::normalize(camera.position - *position);
 
     glm::vec3 right = glm::normalize(glm::cross(camera.world_up, direction));
     glm::vec3 up = glm::cross(direction, right);
 
     if(chase && i % 3 == 0) {
         std::cout << "chasing" << std::endl;
-        position += direction * 0.1f;
-        model = glm::translate(glm::mat4(1.f), position);
+        *position += direction * 0.1f;
+        model = glm::translate(glm::mat4(1.f), *position);
     }
 
     return glm::mat4(
         glm::vec4(right, 0.0f),
         glm::vec4(up, 0.0f),
         glm::vec4(direction, 0.0f),
-        glm::vec4(position, 1.0f)
+        glm::vec4(*position, 1.0f)
     );
 }
 
