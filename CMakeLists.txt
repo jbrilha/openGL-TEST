@@ -23,6 +23,7 @@ include_directories(
     ${OPENGL_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/includes
     ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/utils
 )
 
 add_subdirectory(includes)
