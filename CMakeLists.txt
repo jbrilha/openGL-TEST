@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_COMPILER "g++")
 # set(CMAKE_CXX_EXTENSIONS OFF)
 
+add_compile_options(-Wall -Wextra -Wpedantic)
+
 project(test LANGUAGES C CXX VERSION 1.0.0)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -17,10 +19,17 @@ option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 find_package(glfw3 3.3 REQUIRED)
 find_package(OpenGL REQUIRED)
 
-include_directories(${OPENGL_INCLUDE_DIR})
+include_directories(
+    ${OPENGL_INCLUDE_DIR}
+    ${CMAKE_SOURCE_DIR}/includes
+    ${CMAKE_SOURCE_DIR}/src
+)
 
 add_subdirectory(includes)
-add_executable(test src/main.cpp)
 
-target_link_libraries(test ${OpenGL_gl_LIBRARY} glfw glad)
-include_directories(${CMAKE_SOURCE_DIR}/includes)
+file(GLOB SOURCES_SRC "src/*.cpp")
+list(APPEND SOURCES ${SOURCES_SRC})
+
+add_executable(test ${SOURCES})
+
+target_link_libraries(test PRIVATE ${OpenGL_gl_LIBRARY} glfw glad)
