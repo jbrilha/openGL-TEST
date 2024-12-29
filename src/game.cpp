@@ -1,6 +1,8 @@
 #include "game.hpp"
 #include "cube.hpp"
 #include "pyramid.hpp"
+#include "shape.hpp"
+#include <memory>
 
 Game::Game()
     : win_height(WIN_HEIGHT), win_width(WIN_WIDTH), delta_time(0.f),
@@ -13,17 +15,39 @@ Game::~Game() {
 }
 
 void Game::run() {
-    glm::vec3 cube_positions[] = {
-        glm::vec3(5.0f, 6.0f, -3.0f), glm::vec3(2.0f, 5.0f, -15.0f),
-        glm::vec3(-7.f, 2.2f, -2.5f), glm::vec3(-3.8f, 6.0f, -12.3f),
-        glm::vec3(2.4f, 3.f, -3.5f),  glm::vec3(-1.7f, 3.0f, -7.5f),
-        glm::vec3(1.3f, 2.0f, -2.5f), glm::vec3(5.f, 2.0f, -2.5f),
-        glm::vec3(1.5f, 5.f, -1.5f),  glm::vec3(-6.f, 10.0f, -1.5f)};
+glm::vec3 cube_positions[] = {
+        glm::vec3(5.0f, 6.0f, -3.0f), 
+        glm::vec3(5.0f, 6.0f, -3.0f), 
+        glm::vec3(2.0f, 5.0f, -15.0f),
+        glm::vec3(2.0f, 5.0f, -15.0f),
+        glm::vec3(-7.f, 2.2f, -2.5f),
+        glm::vec3(-7.f, 2.2f, -2.5f),
+        glm::vec3(-3.8f, 6.0f, -12.3f),
+        glm::vec3(-3.8f, 6.0f, -12.3f),
+        glm::vec3(2.4f, 3.f, -3.5f),
+        glm::vec3(2.4f, 3.f, -3.5f),
+        glm::vec3(-1.7f, 3.0f, -7.5f),
+        glm::vec3(-1.7f, 3.0f, -7.5f),
+        glm::vec3(1.3f, 2.0f, -2.5f),
+        glm::vec3(1.3f, 2.0f, -2.5f),
+        glm::vec3(5.f, 2.0f, -2.5f),
+        glm::vec3(5.f, 2.0f, -2.5f),
+        glm::vec3(1.5f, 5.f, -1.5f),
+        glm::vec3(1.5f, 5.f, -1.5f),
+        glm::vec3(-6.f, 10.0f, -1.5f),
+        glm::vec3(-6.f, 10.0f, -1.5f)};
 
-    Cube cube;
-    Pyramid pyr;
+    // Cube cube;
+    // Pyramid pyr;
     Floor floor;
 
+    std::vector<std::unique_ptr<Shape>> shapes;
+    for (int i = 0; i < 10; i++) {
+        shapes.push_back(std::make_unique<Cube>());
+        shapes.push_back(std::make_unique<Pyramid>());
+    }
+
+    std::cout << "Total shapes: " << shapes.size() << std::endl;
     glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(window)) {
         process_input();
@@ -37,16 +61,21 @@ void Game::run() {
         glm::mat4 view = camera->get_view_matrix();
         glm::mat4 model;
 
-        for (unsigned int i = 0; i < 10; i++) {
+        int i = 0;
+        for (const auto &shape : shapes) {
             model = glm::mat4(1.0f);
             model = glm::translate(model, cube_positions[i]);
             if (track) {
                 track_camera(&model, &cube_positions[i], i);
             }
 
-            cube.draw(projection, view, model);
-            model = glm::translate(model, glm::vec3(0.f, 1.0f, 0.f));
-            pyr.draw(projection, view, model);
+            if (dynamic_cast<Pyramid *>(shape.get())) {
+                model = glm::translate(
+                    model, glm::vec3(0.f, 1.f, 0.f)); // make a little house :)
+            }
+            shape->draw(projection, view, model);
+
+            i++;
         }
 
         floor.draw(projection, view);
@@ -67,7 +96,7 @@ void Game::track_camera(glm::mat4 *model, glm::vec3 *position, int i) {
     glm::vec3 right = glm::normalize(glm::cross(camera->world_up, direction));
     glm::vec3 up = glm::cross(direction, right);
 
-    if (chase && i % 2 == 0) {
+    if (chase) {
         *position += direction * 0.1f;
     }
 
