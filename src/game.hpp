@@ -1,7 +1,6 @@
 #ifndef GAME_HPP
 #define GAME_HPP
 
-#include "camera.hpp"
 #define GLAD_GL_IMPLEMENTATION
 #include <glad/glad.h>
 #define GLFW_INCLUDE_NONE
@@ -12,6 +11,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <unistd.h>
+
+#include "camera.hpp"
+#include "cube.hpp"
+#include "floor.hpp"
+#include "constants.hpp"
 
 class Game {
   public:
@@ -55,8 +59,8 @@ class Game {
     bool track;
     bool paused;
     glm::mat4 projection;
-    float near = 0.1f;
-    float far = 100.f;
+    float near;
+    float far;
 
     Camera *camera;
 };

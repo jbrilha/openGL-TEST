@@ -1,11 +1,11 @@
 #include "game.hpp"
 #include "cube.hpp"
-#include "floor.hpp"
+#include "pyramid.hpp"
 
 Game::Game()
-    : win_height(800), win_width(800), delta_time(0.f), last_frame(0.f),
-      last_x(win_height / 2.f), last_y(win_height / 2.f), chase(false),
-      track(false), near(0.1f), far(100.f), camera(nullptr) {}
+    : win_height(WIN_HEIGHT), win_width(WIN_WIDTH), delta_time(0.f),
+      last_frame(0.f), last_x(win_height / 2.f), last_y(win_height / 2.f),
+      chase(false), track(false), near(NEAR), far(FAR), camera(nullptr) {}
 
 Game::~Game() {
     delete camera;
@@ -21,41 +21,22 @@ void Game::run() {
         glm::vec3(1.5f, 5.f, -1.5f),  glm::vec3(-6.f, 10.0f, -1.5f)};
 
     Cube cube;
+    Pyramid pyr;
     Floor floor;
-    float current_frame;
 
     glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(window)) {
-        process_input(); // using callback instead
+        process_input();
         camera->move();
-
-        current_frame = static_cast<float>(glfwGetTime());
-        delta_time = current_frame - last_frame;
-        last_frame = current_frame;
-
-        double current_time = glfwGetTime();
-        nb_frames++;
-        if (current_time - last_time >= 1.0) {
-            FPS = std::to_string(nb_frames);
-
-            nb_frames = 0;
-            last_time = current_time;
-        }
 
         update_title_bar();
 
         glClearColor(0.3f, 0.3f, 0.3f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         glm::mat4 view = camera->get_view_matrix();
-
-        GLint current_program;
-        glGetIntegerv(GL_CURRENT_PROGRAM, &current_program);
-        // std::cout << "Before cube draw - active shader: " << current_program
-        //           << std::endl;
-        // std::cout << "Cube shader id: " << cube.shader_program.program_ID
-        //           << std::endl;
-
         glm::mat4 model;
+
         for (unsigned int i = 0; i < 10; i++) {
             model = glm::mat4(1.0f);
             model = glm::translate(model, cube_positions[i]);
@@ -64,17 +45,12 @@ void Game::run() {
             }
 
             cube.draw(projection, view, model);
+            model = glm::translate(model, glm::vec3(0.f, 1.0f, 0.f));
+            pyr.draw(projection, view, model);
         }
 
-        glGetIntegerv(GL_CURRENT_PROGRAM, &current_program);
-        // std::cout << "Before floor draw - active shader: " << current_program
-        //           << std::endl;
-        model = glm::mat4(1.0f);
-        floor.draw(projection, view, model);
+        floor.draw(projection, view);
 
-        glGetIntegerv(GL_CURRENT_PROGRAM, &current_program);
-        // std::cout << "After floor draw - active shader: " << current_program
-        //           << std::endl;
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -93,7 +69,6 @@ void Game::track_camera(glm::mat4 *model, glm::vec3 *position, int i) {
 
     if (chase && i % 2 == 0) {
         *position += direction * 0.1f;
-        // model = glm::translate(glm::mat4(1.f), *position);
     }
 
     *model = glm::mat4(glm::vec4(right, 0.0f), glm::vec4(up, 0.0f),
@@ -190,6 +165,7 @@ void Game::set_callbacks() {
             instance->mouse_button_callback(window, button, action, mods);
     });
 }
+
 void Game::mouse_button_callback(GLFWwindow *window, int button, int action,
                                  int mods) {
     if (button == GLFW_MOUSE_BUTTON_LEFT) {
@@ -293,6 +269,21 @@ void Game::error_callback(int error, const char *description) {
 }
 
 void Game::update_title_bar() {
+    float current_frame;
+
+    current_frame = static_cast<float>(glfwGetTime());
+    delta_time = current_frame - last_frame;
+    last_frame = current_frame;
+
+    double current_time = glfwGetTime();
+    nb_frames++;
+    if (current_time - last_time >= 1.0) {
+        FPS = std::to_string(nb_frames);
+
+        nb_frames = 0;
+        last_time = current_time;
+    }
+
     std::string TITLE_BAR = NAME + " — " + FPS + " FPS";
 
     glfwSetWindowTitle(window, TITLE_BAR.c_str());
