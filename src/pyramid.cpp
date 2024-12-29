@@ -1,34 +1,13 @@
 #include "pyramid.hpp"
 
-Pyramid::Pyramid()
-    : shader_program("shaders/cube_vert.glsl", "shaders/cube_frag.glsl") {
+Pyramid::Pyramid() : Shape("shaders/cube_vert.glsl", "shaders/cube_frag.glsl") {
     set_shaders();
 }
 
-Pyramid::~Pyramid() { glDeleteProgram(shader_program.program_ID); }
-
-void check_gl_errorp() {
-    GLenum err;
-    while ((err = glGetError()) != GL_NO_ERROR) {
-        std::cerr << "Pyramid OpenGL error: " << err << std::endl;
-    }
-}
-
-void Pyramid::draw(glm::mat4 projection, glm::mat4 view, glm::mat4 model) {
-    shader_program.use();
-    shader_program.set_mat4("projection", projection);
-    shader_program.set_mat4("view", view);
-    shader_program.set_mat4("model", model);
-
-    glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, indices.size() * sizeof(int), GL_UNSIGNED_INT,
-                   0);
-    glBindVertexArray(0);
-    check_gl_errorp();
-}
+Pyramid::~Pyramid() { shader_program->del(); }
 
 void Pyramid::set_shaders() {
-    shader_program.use();
+    shader_program->use();
     set_indices();
     set_vertices();
 
@@ -56,7 +35,6 @@ void Pyramid::set_shaders() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glBindVertexArray(0);
-    check_gl_errorp();
 }
 
 void Pyramid::set_indices() {
