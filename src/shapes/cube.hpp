@@ -1,5 +1,5 @@
-#ifndef PYRAMID_H
-#define PYRAMID_H
+#ifndef CUBE_H
+#define CUBE_H
 
 #include "shaders.hpp"
 #include "shape.hpp"
@@ -10,10 +10,10 @@
 
 #include <vector>
 
-class Pyramid : public Shape {
+class Cube : public Shape {
   public:
-    Pyramid();
-    ~Pyramid() override;
+    Cube(glm::vec3 pos = glm::vec3(1.f));
+    ~Cube() override;
 
   private:
     void set_shaders() override;

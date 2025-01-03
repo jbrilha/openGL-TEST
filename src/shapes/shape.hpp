@@ -12,12 +12,16 @@
 
 class Shape {
   public:
-    Shape(std::string vert_shader, std::string frag_shader);
+    Shape(std::string vert_shader, std::string frag_shader, glm::vec3 pos);
     virtual ~Shape() = default;
     void draw(glm::mat4 projection, glm::mat4 view, glm::mat4 model);
+    void update_pos(glm::vec3 pos);
+    void look_at(glm::vec3 pos);
+    bool active;
+    glm::vec3 pos;
+    glm::mat4 model;
 
   private:
-
   protected:
     virtual void set_shaders() = 0;
     virtual void set_vertices() = 0;

@@ -23,13 +23,16 @@ include_directories(
     ${OPENGL_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/includes
     ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src/shapes
     ${CMAKE_SOURCE_DIR}/utils
 )
 
 add_subdirectory(includes)
 
 file(GLOB SOURCES_SRC "src/*.cpp")
+file(GLOB SOURCES_SHP "src/shapes/*.cpp")
 list(APPEND SOURCES ${SOURCES_SRC})
+list(APPEND SOURCES ${SOURCES_SHP})
 
 add_executable(test ${SOURCES})
 

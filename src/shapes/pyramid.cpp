@@ -1,6 +1,7 @@
 #include "pyramid.hpp"
 
-Pyramid::Pyramid() : Shape("shaders/cube_vert.glsl", "shaders/cube_frag.glsl") {
+Pyramid::Pyramid(glm::vec3 pos)
+    : Shape("shaders/cube_vert.glsl", "shaders/cube_frag.glsl", pos) {
     set_shaders();
 }
 
