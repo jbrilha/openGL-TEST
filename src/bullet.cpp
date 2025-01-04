@@ -39,16 +39,41 @@ void Bullet::set_shaders() {
 }
 
 void Bullet::set_indices() {
-    indices = {0, 1, 2, 1, 3, 2, 0, 2, 4, 2, 3, 4, 3, 1, 4, 1, 0, 4};
+    for (int i = 0; i < stacks; ++i) {
+        int k1 = i * (sectors + 1);
+        int k2 = k1 + sectors + 1;
+
+        for (int j = 0; j < sectors; ++j, ++k1, ++k2) {
+            if (i != 0) {
+                indices.push_back(k1);
+                indices.push_back(k2);
+                indices.push_back(k1 + 1);
+            }
+
+            if (i != (stacks - 1)) {
+                indices.push_back(k1 + 1);
+                indices.push_back(k2);
+                indices.push_back(k2 + 1);
+            }
+        }
+    }
 }
 
 void Bullet::set_vertices() {
-    vertices = {
-        glm::vec3(0.1f, -0.1f, -0.1f),  // back bot right
-        glm::vec3(-0.1f, -0.1f, -0.1f), // back bot left
+    float sector_step = 2 * M_PI / sectors;
+    float stack_step = M_PI / stacks;
 
-        glm::vec3(0.1f, -0.1f, 0.1f),  // front bot right
-        glm::vec3(-0.1f, -0.1f, 0.1f), // front bot left
-        glm::vec3(0.f, 0.1f, 0.f),     // top
-    };
+    for (int i = 0; i <= stacks; ++i) {
+        float phi = M_PI / 2 - i * stack_step;
+        float xy = radius * cosf(phi);
+        float z = radius * sinf(phi);
+
+        for (int j = 0; j <= sectors; ++j) {
+            float theta = j * sector_step;
+
+            float x = xy * cosf(theta);
+            float y = xy * sinf(theta);
+            vertices.push_back(glm::vec3(x, y, z));
+        }
+    }
 }

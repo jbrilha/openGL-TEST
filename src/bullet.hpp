@@ -19,5 +19,9 @@ class Bullet : public Projectile {
     void set_shaders() override;
     void set_vertices() override;
     void set_indices() override;
+
+    int sectors = 36;
+    int stacks = 18;
+    float radius = 0.1f;
 };
 #endif

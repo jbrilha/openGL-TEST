@@ -1,7 +1,10 @@
 #include "game.hpp"
+#include "bullet.hpp"
 #include "cube.hpp"
 #include "pyramid.hpp"
 #include "shape.hpp"
+#include "sphere.hpp"
+#include <cstdlib>
 #include <memory>
 
 Game::Game()
@@ -14,44 +17,39 @@ Game::~Game() {
     camera = nullptr;
 }
 
-void Game::run() {
-glm::vec3 cube_positions[] = {
-        glm::vec3(5.0f, 6.0f, -3.0f), 
-        glm::vec3(5.0f, 6.0f, -3.0f), 
-        glm::vec3(2.0f, 5.0f, -15.0f),
-        glm::vec3(2.0f, 5.0f, -15.0f),
-        glm::vec3(-7.f, 2.2f, -2.5f),
-        glm::vec3(-7.f, 2.2f, -2.5f),
-        glm::vec3(-3.8f, 6.0f, -12.3f),
-        glm::vec3(-3.8f, 6.0f, -12.3f),
-        glm::vec3(2.4f, 3.f, -3.5f),
-        glm::vec3(2.4f, 3.f, -3.5f),
-        glm::vec3(-1.7f, 3.0f, -7.5f),
-        glm::vec3(-1.7f, 3.0f, -7.5f),
-        glm::vec3(1.3f, 2.0f, -2.5f),
-        glm::vec3(1.3f, 2.0f, -2.5f),
-        glm::vec3(5.f, 2.0f, -2.5f),
-        glm::vec3(5.f, 2.0f, -2.5f),
-        glm::vec3(1.5f, 5.f, -1.5f),
-        glm::vec3(1.5f, 5.f, -1.5f),
-        glm::vec3(-6.f, 10.0f, -1.5f),
-        glm::vec3(-6.f, 10.0f, -1.5f)};
+void Game::init() {
+    camera = new Camera(glm::vec3(0.f, 3.f, 7.f));
 
-    // Cube cube;
-    // Pyramid pyr;
+    init_GLFW();
+}
+
+void Game::run() {
+    glm::vec3 cube_positions[] = {
+        glm::vec3(5.0f, 6.0f, -3.0f), glm::vec3(2.0f, 5.0f, -15.0f),
+        glm::vec3(-7.f, 2.2f, -2.5f), glm::vec3(-3.8f, 6.0f, -12.3f),
+        glm::vec3(2.4f, 3.f, -3.5f),  glm::vec3(-1.7f, 3.0f, -7.5f),
+        glm::vec3(1.3f, 2.0f, -2.5f), glm::vec3(5.f, 2.0f, -2.5f),
+        glm::vec3(1.5f, 5.f, -1.5f),  glm::vec3(-6.f, 10.0f, -1.5f),
+    };
+
     Floor floor;
+    std::unique_ptr<Bullet> bull;
 
     std::vector<std::unique_ptr<Shape>> shapes;
     for (int i = 0; i < 10; i++) {
-        shapes.push_back(std::make_unique<Cube>());
-        shapes.push_back(std::make_unique<Pyramid>());
+        glm::vec3 pos = cube_positions[i];
+        shapes.push_back(std::make_unique<Cube>(pos));
+        pos += glm::vec3(0.f, 1.f, 0.f);
+        shapes.push_back(std::make_unique<Pyramid>(pos));
+        pos += glm::vec3(0.f, 1.f, 0.f);
+        shapes.push_back(std::make_unique<Sphere>(pos));
     }
 
     std::cout << "Total shapes: " << shapes.size() << std::endl;
     glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(window)) {
         process_input();
-        camera->move();
+        // camera->move();
 
         update_title_bar();
 
@@ -61,24 +59,31 @@ glm::vec3 cube_positions[] = {
         glm::mat4 view = camera->get_view_matrix();
         glm::mat4 model;
 
-        int i = 0;
+        if (track) { // just to test it out
+            int rand = std::rand() % 10;
+            glm::vec3 inpos = camera->position;
+            glm::vec3 direction = cube_positions[rand] - inpos;
+            float speed = 100.0f; // units per second
+            glm::vec3 trajectory = glm::normalize(direction) * speed;
+            bull = std::make_unique<Bullet>(inpos, trajectory);
+        }
+
         for (const auto &shape : shapes) {
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, cube_positions[i]);
             if (track) {
-                track_camera(&model, &cube_positions[i], i);
+                shape->look_at(camera->position);
             }
-
-            if (dynamic_cast<Pyramid *>(shape.get())) {
-                model = glm::translate(
-                    model, glm::vec3(0.f, 1.f, 0.f)); // make a little house :)
-            }
-            shape->draw(projection, view, model);
-
-            i++;
+            shape->draw(projection, view);
         }
 
         floor.draw(projection, view);
+
+        if (bull && bull->active) {
+            float current_frame;
+
+            current_frame = static_cast<float>(glfwGetTime());
+            bull->update(current_frame - last_frame);
+            bull->draw(projection, view);
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -87,27 +92,6 @@ glm::vec3 cube_positions[] = {
     glfwDestroyWindow(window);
 
     glfwTerminate();
-}
-
-void Game::track_camera(glm::mat4 *model, glm::vec3 *position, int i) {
-
-    glm::vec3 direction = glm::normalize(camera->position - *position);
-
-    glm::vec3 right = glm::normalize(glm::cross(camera->world_up, direction));
-    glm::vec3 up = glm::cross(direction, right);
-
-    if (chase) {
-        *position += direction * 0.1f;
-    }
-
-    *model = glm::mat4(glm::vec4(right, 0.0f), glm::vec4(up, 0.0f),
-                       glm::vec4(direction, 0.0f), glm::vec4(*position, 1.0f));
-}
-
-void Game::init() {
-    camera = new Camera(glm::vec3(0.f, 3.f, 7.f));
-
-    init_GLFW();
 }
 
 void Game::init_GLFW() {
