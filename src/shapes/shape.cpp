@@ -7,7 +7,7 @@ Shape::Shape(std::string vert_shader, std::string frag_shader, glm::vec3 pos)
     model = glm::translate(m, pos);
 }
 
-void Shape::draw(glm::mat4 projection, glm::mat4 view, glm::mat4 model) {
+void Shape::draw(glm::mat4 projection, glm::mat4 view) {
     shader_program->use();
     shader_program->set_mat4("projection", projection);
     shader_program->set_mat4("view", view);

@@ -22,6 +22,6 @@ class Sphere : public Shape {
     
     int sectors = 36;
     int stacks = 18;
-    float radius = 1.f;
+    float radius = 0.5f;
 };
 #endif

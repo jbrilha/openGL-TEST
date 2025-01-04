@@ -14,7 +14,7 @@ class Shape {
   public:
     Shape(std::string vert_shader, std::string frag_shader, glm::vec3 pos);
     virtual ~Shape() = default;
-    void draw(glm::mat4 projection, glm::mat4 view, glm::mat4 model);
+    void draw(glm::mat4 projection, glm::mat4 view);
     void update_pos(glm::vec3 pos);
     void look_at(glm::vec3 pos);
     bool active;
