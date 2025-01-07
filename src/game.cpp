@@ -11,16 +11,22 @@ Game::Game()
     : win_height(WIN_HEIGHT), win_width(WIN_WIDTH), delta_time(0.f),
       last_frame(0.f), last_x(win_height / 2.f), last_y(win_height / 2.f),
       chase(false), track(false), near(NEAR), far(FAR), camera(nullptr) {}
+      far(FAR), camera(nullptr), cursor(nullptr) {}
 
 Game::~Game() {
     delete camera;
     camera = nullptr;
+
+    delete cursor;
+    cursor = nullptr;
 }
 
 void Game::init() {
     camera = new Camera(glm::vec3(0.f, 3.f, 7.f));
 
     init_GLFW();
+
+    cursor = new Cursor(window, 1, 5);
 }
 
 void Game::run() {
@@ -58,6 +64,7 @@ void Game::run() {
 
         glm::mat4 view = camera->get_view_matrix();
         glm::mat4 model;
+        cursor->draw();
 
         if (track) { // just to test it out
             int rand = std::rand() % 10;

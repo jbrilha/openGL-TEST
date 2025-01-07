@@ -12,6 +12,7 @@
 #include <iostream>
 #include <unistd.h>
 
+#include "cursor.hpp"
 #include "camera.hpp"
 #include "cube.hpp"
 #include "floor.hpp"
@@ -63,6 +64,7 @@ class Game {
     float far;
 
     Camera *camera;
+    Cursor *cursor;
 };
 
 #endif
