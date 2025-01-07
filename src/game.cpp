@@ -1,16 +1,10 @@
 #include "game.hpp"
-#include "bullet.hpp"
-#include "cube.hpp"
-#include "pyramid.hpp"
-#include "shape.hpp"
-#include "sphere.hpp"
-#include <cstdlib>
 #include <memory>
 
 Game::Game()
     : win_height(WIN_HEIGHT), win_width(WIN_WIDTH), delta_time(0.f),
       last_frame(0.f), last_x(win_height / 2.f), last_y(win_height / 2.f),
-      chase(false), track(false), near(NEAR), far(FAR), camera(nullptr) {}
+      chase(false), shoot(false), track(false), paused(false), near(NEAR),
       far(FAR), camera(nullptr), cursor(nullptr) {}
 
 Game::~Game() {
@@ -38,60 +32,81 @@ void Game::run() {
         glm::vec3(1.5f, 5.f, -1.5f),  glm::vec3(-6.f, 10.0f, -1.5f),
     };
 
-    Floor floor;
-    std::unique_ptr<Bullet> bull;
+    world_objs.push_back(std::make_unique<Floor>(projection));
 
-    std::vector<std::unique_ptr<Shape>> shapes;
     for (int i = 0; i < 10; i++) {
         glm::vec3 pos = cube_positions[i];
-        shapes.push_back(std::make_unique<Cube>(pos));
+        shapes.push_back(std::make_unique<Cube>(projection, pos));
         pos += glm::vec3(0.f, 1.f, 0.f);
-        shapes.push_back(std::make_unique<Pyramid>(pos));
+        shapes.push_back(std::make_unique<Pyramid>(projection, pos));
         pos += glm::vec3(0.f, 1.f, 0.f);
-        shapes.push_back(std::make_unique<Sphere>(pos));
+        shapes.push_back(std::make_unique<Sphere>(projection, pos));
     }
 
-    std::cout << "Total shapes: " << shapes.size() << std::endl;
+    for (int i = 0; i < 1000; i++) {
+        projectiles.push_back(std::make_unique<Bullet>(projection));
+    }
+    size_t cb = 0;
+
     glEnable(GL_DEPTH_TEST);
+    glm::mat4 view;
+
+    float current_frame;
     while (!glfwWindowShouldClose(window)) {
+        current_frame = static_cast<float>(glfwGetTime());
+        delta_time = current_frame - last_frame;
+
         process_input();
-        // camera->move();
+        camera->move();
 
         update_title_bar();
 
         glClearColor(0.3f, 0.3f, 0.3f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 view = camera->get_view_matrix();
-        glm::mat4 model;
-        cursor->draw();
+        view = camera->get_view_matrix();
 
-        if (track) { // just to test it out
-            int rand = std::rand() % 10;
-            glm::vec3 inpos = camera->position;
-            glm::vec3 direction = cube_positions[rand] - inpos;
-            float speed = 100.0f; // units per second
-            glm::vec3 trajectory = glm::normalize(direction) * speed;
-            bull = std::make_unique<Bullet>(inpos, trajectory);
+        if (shoot) { // just to test it out
+            if (!projectiles[cb]->active) {
+                glm::vec3 inpos = camera->position + glm::vec3(0.f, -0.2f, 0.f);
+                glm::vec3 direction = camera->front;
+                glm::vec3 trajectory =
+                    glm::normalize(direction) * (P_SPEED / 4);
+                projectiles[cb]->init(inpos, trajectory);
+            }
+            if (cb < projectiles.size() - 1) {
+                cb++;
+            } else {
+                cb = 0;
+            }
+            shoot = false;
         }
 
+        cursor->draw();
+
+        for (const auto &bull : projectiles) {
+            if (bull->active) {
+                if (!paused)
+                    bull->update(delta_time);
+
+                bull->draw(view);
+            }
+        }
+
+        // TODO figure out optimization for setting projection on all objects
+        // instead of on every draw call, check out UBOs?
         for (const auto &shape : shapes) {
             if (track) {
                 shape->look_at(camera->position);
             }
-            shape->draw(projection, view);
+            shape->draw(view);
         }
 
-        floor.draw(projection, view);
-
-        if (bull && bull->active) {
-            float current_frame;
-
-            current_frame = static_cast<float>(glfwGetTime());
-            bull->update(current_frame - last_frame);
-            bull->draw(projection, view);
+        for (const auto &world_obj : world_objs) {
+            world_obj->draw(view);
         }
 
+        last_frame = current_frame;
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -188,16 +203,17 @@ void Game::set_callbacks() {
 
 void Game::mouse_button_callback(GLFWwindow *window, int button, int action,
                                  int mods) {
+    (void)window, (void)mods;
     if (button == GLFW_MOUSE_BUTTON_LEFT) {
-        if (action == GLFW_PRESS)
-            std::cout << "marco" << std::endl;
-        if (action == GLFW_RELEASE)
-            std::cout << "polo" << std::endl;
+        if (action == GLFW_PRESS) {
+            shoot = true;
+        }
     }
 }
 
 void Game::mouse_pos_callback(GLFWwindow *window, double x_pos_in,
                               double y_pos_in) {
+    (void)window;
     float x_pos = static_cast<float>(x_pos_in);
     float y_pos = static_cast<float>(y_pos_in);
 
@@ -218,6 +234,7 @@ void Game::mouse_pos_callback(GLFWwindow *window, double x_pos_in,
 
 void Game::key_callback(GLFWwindow *window, int key, int scancode, int action,
                         int mods) {
+    (void)scancode, (void)mods;
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 
@@ -241,11 +258,21 @@ void Game::key_callback(GLFWwindow *window, int key, int scancode, int action,
         paused = !paused;
     if (key == GLFW_KEY_X && action == GLFW_PRESS)
         chase = !chase;
+
+    if (key == GLFW_KEY_R && action == GLFW_PRESS)
+        for (const auto &bull : projectiles) {
+            bull->active = false;
+        }
 }
 
 void Game::process_input() {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS &&
+        delta_time >= 0.001f) {
+        shoot = true;
+    }
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         camera->handle_keyboard(FORWARD, delta_time, glfwGetTime());
@@ -276,12 +303,25 @@ void Game::process_input() {
 
 void Game::framebuffer_size_callback(GLFWwindow *window, int width,
                                      int height) {
+    (void)window;
     glViewport(0, 0, width, height);
     win_width = width;
     win_height = height;
 
     projection = glm::perspective(glm::radians(camera->zoom),
                                   (float)width / (float)height, near, far);
+
+    for (const auto &bull : projectiles) {
+        bull->set_projection(projection);
+    }
+
+    for (const auto &shape : shapes) {
+        shape->set_projection(projection);
+    }
+
+    for (const auto &world_obj : world_objs) {
+        world_obj->set_projection(projection);
+    }
 }
 
 void Game::error_callback(int error, const char *description) {
@@ -289,12 +329,6 @@ void Game::error_callback(int error, const char *description) {
 }
 
 void Game::update_title_bar() {
-    float current_frame;
-
-    current_frame = static_cast<float>(glfwGetTime());
-    delta_time = current_frame - last_frame;
-    last_frame = current_frame;
-
     double current_time = glfwGetTime();
     nb_frames++;
     if (current_time - last_time >= 1.0) {

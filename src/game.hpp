@@ -1,6 +1,7 @@
 #ifndef GAME_HPP
 #define GAME_HPP
 
+#include "scenery.hpp"
 #define GLAD_GL_IMPLEMENTATION
 #include <glad/glad.h>
 #define GLFW_INCLUDE_NONE
@@ -11,12 +12,20 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <unistd.h>
+#include <cstdlib>
+#include <memory>
 
 #include "cursor.hpp"
 #include "camera.hpp"
-#include "cube.hpp"
-#include "floor.hpp"
 #include "constants.hpp"
+#include "projectile.hpp"
+#include "shape.hpp"
+#include "bullet.hpp"
+#include "cube.hpp"
+#include "pyramid.hpp"
+#include "shape.hpp"
+#include "floor.hpp"
+#include "sphere.hpp"
 
 class Game {
   public:
@@ -27,6 +36,9 @@ class Game {
     void init();
 
   private:
+    std::vector<std::unique_ptr<Shape>> shapes;
+    std::vector<std::unique_ptr<Projectile>> projectiles;
+    std::vector<std::unique_ptr<Scenery>> world_objs;
     void update_title_bar();
     int nb_frames;
     int last_time;
@@ -57,6 +69,7 @@ class Game {
     float last_y;
     bool first_mouse;
     bool chase;
+    bool shoot;
     bool track;
     bool paused;
     glm::mat4 projection;
