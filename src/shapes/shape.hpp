@@ -12,20 +12,28 @@
 
 class Shape {
   public:
-    Shape(std::string vert_shader, std::string frag_shader, glm::vec3 pos);
+    Shape(std::string vert_shader, std::string frag_shader,
+          glm::mat4 projection, glm::vec3 pos);
     virtual ~Shape() = default;
-    void draw(glm::mat4 projection, glm::mat4 view);
-    void update_pos(glm::vec3 pos);
+    void draw(const glm::mat4 &view);
+
+    void set_pos(glm::vec3 pos);
+    void set_model(glm::mat4 model);
+    void set_projection(glm::mat4 projection);
+
     void look_at(glm::vec3 pos);
     bool active;
-    glm::vec3 pos;
-    glm::mat4 model;
 
   private:
   protected:
     virtual void set_shaders() = 0;
     virtual void set_vertices() = 0;
     virtual void set_indices() = 0;
+
+    glm::mat4 model;
+    glm::mat4 projection;
+    glm::vec3 pos;
+
     Shader *shader_program;
     unsigned int VBO, VAO, EBO; // vertex buffer object, vertex array
                                 // object, element buffer object

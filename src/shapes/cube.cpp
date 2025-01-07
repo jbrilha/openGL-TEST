@@ -1,7 +1,8 @@
 #include "cube.hpp"
 
-Cube::Cube(glm::vec3 pos)
-    : Shape("shaders/cube_vert.glsl", "shaders/cube_frag.glsl", pos) {
+Cube::Cube(glm::mat4 projection, glm::vec3 pos)
+    : Shape("shaders/cube_vert.glsl", "shaders/cube_frag.glsl", projection,
+            pos) {
     set_shaders();
 }
 

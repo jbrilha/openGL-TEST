@@ -1,7 +1,7 @@
 #include "floor.hpp"
 
-Floor::Floor()
-    : Scenery("shaders/floor_vert.glsl", "shaders/floor_frag.glsl"),
+Floor::Floor(glm::mat4 projection)
+    : Scenery("shaders/floor_vert.glsl", "shaders/floor_frag.glsl", projection),
       tile_count(TILE_COUNT) {
     set_shaders();
 }

@@ -1,7 +1,8 @@
 #include "sphere.hpp"
 
-Sphere::Sphere(glm::vec3 pos)
-    : Shape("shaders/cube_vert.glsl", "shaders/cube_frag.glsl", pos) {
+Sphere::Sphere(glm::mat4 projection, glm::vec3 pos)
+    : Shape("shaders/cube_vert.glsl", "shaders/cube_frag.glsl", projection,
+            pos) {
     set_shaders();
 }
 

@@ -1,15 +1,16 @@
 #include "shape.hpp"
 
-Shape::Shape(std::string vert_shader, std::string frag_shader, glm::vec3 pos)
-    : pos(pos),
+Shape::Shape(std::string vert_shader, std::string frag_shader,
+             glm::mat4 projection, glm::vec3 pos)
+    : projection(projection), pos(pos),
       shader_program(new Shader(vert_shader.c_str(), frag_shader.c_str())) {
     glm::mat4 m = glm::mat4(1.f);
     model = glm::translate(m, pos);
 }
 
-void Shape::draw(glm::mat4 projection, glm::mat4 view) {
+void Shape::draw(const glm::mat4 &view) {
     shader_program->use();
-    shader_program->set_mat4("projection", projection);
+    shader_program->set_mat4("projection", this->projection);
     shader_program->set_mat4("view", view);
     shader_program->set_mat4("model", this->model);
 
@@ -19,9 +20,15 @@ void Shape::draw(glm::mat4 projection, glm::mat4 view) {
     glBindVertexArray(0);
 }
 
-void Shape::update_pos(glm::vec3 new_pos) {
-    pos = new_pos;
-    this->model = glm::translate(model, pos);
+void Shape::set_projection(glm::mat4 projection) {
+    this->projection = projection;
+}
+
+void Shape::set_model(glm::mat4 model) { this->model = model; }
+
+void Shape::set_pos(glm::vec3 new_pos) {
+    this->pos = new_pos;
+    this->model = glm::translate(glm::mat4(1.f), pos);
 }
 
 void Shape::look_at(glm::vec3 look_at_pos) {

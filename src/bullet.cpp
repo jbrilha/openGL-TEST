@@ -1,7 +1,14 @@
 #include "bullet.hpp"
 
-Bullet::Bullet(glm::vec3 pos, glm::vec3 vel)
-    : Projectile("shaders/cube_vert.glsl", "shaders/cube_frag.glsl", pos, vel) {
+Bullet::Bullet(glm::mat4 projection, glm::vec3 pos, glm::vec3 vel)
+    : Projectile("shaders/cube_vert.glsl", "shaders/cube_frag.glsl", projection,
+                 pos, vel) {
+    set_shaders();
+}
+
+Bullet::Bullet(glm::mat4 projection)
+    : Projectile("shaders/cube_vert.glsl", "shaders/cube_frag.glsl", projection,
+                 glm::vec3(0.f), glm::vec3(0.f)) {
     set_shaders();
 }
 

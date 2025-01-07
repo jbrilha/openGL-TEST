@@ -12,7 +12,7 @@
 
 class Pyramid : public Shape {
   public:
-    Pyramid(glm::vec3 pos = glm::vec3(1.f));
+    Pyramid(glm::mat4 projection, glm::vec3 pos = glm::vec3(1.f));
     ~Pyramid() override;
 
   private:
