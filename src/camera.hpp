@@ -50,7 +50,6 @@ class Camera {
     float bob_amount = 0.f;
     float max_jump_height = default_eye_level + JUMP_HEIGHT_MODIFIER;
     float crouch_height = default_eye_level - CROUCH_HEIGHT_MODIFIER;
-    ;
     // float prone_height = 1.f + floating_point_error_solver;
 
     glm::vec3 front;
