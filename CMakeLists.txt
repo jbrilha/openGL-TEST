@@ -24,6 +24,7 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/includes
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/src/shapes
+    ${CMAKE_SOURCE_DIR}/src/ui
     ${CMAKE_SOURCE_DIR}/utils
 )
 
@@ -31,8 +32,10 @@ add_subdirectory(includes)
 
 file(GLOB SOURCES_SRC "src/*.cpp")
 file(GLOB SOURCES_SHP "src/shapes/*.cpp")
+file(GLOB SOURCES_UI "src/ui/*.cpp")
 list(APPEND SOURCES ${SOURCES_SRC})
 list(APPEND SOURCES ${SOURCES_SHP})
+list(APPEND SOURCES ${SOURCES_UI})
 
 add_executable(test ${SOURCES})
 
