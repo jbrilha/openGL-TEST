@@ -2,7 +2,7 @@
 #include "glm/ext/matrix_transform.hpp"
 
 Projectile::Projectile(std::string vert_shader, std::string frag_shader,
-                       glm::mat4 projection, glm::vec3 pos, glm::vec3 vel)
+                       glm::mat4 &projection, glm::vec3 pos, glm::vec3 vel)
     : active(false), model(1.f), projection(projection), pos(pos),
       shader_program(new Shader(vert_shader.c_str(), frag_shader.c_str())),
       vel(vel), acc(glm::vec3(0.f, -9.81f, 0.f)), lifetime(P_LIFETIME) {}

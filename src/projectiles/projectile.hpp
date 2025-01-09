@@ -13,7 +13,7 @@
 class Projectile {
   public:
     Projectile(std::string vert_shader, std::string frag_shader,
-               glm::mat4 projection, glm::vec3 pos, glm::vec3 vel);
+               glm::mat4 &projection, glm::vec3 pos, glm::vec3 vel);
     virtual ~Projectile() = default;
     void draw(const glm::mat4 &view);
     void update(float d_time);
@@ -33,7 +33,7 @@ class Projectile {
     virtual void set_indices() = 0;
 
     glm::mat4 model;
-    glm::mat4 projection;
+    glm::mat4 &projection;
     glm::vec3 pos;
 
     Shader *shader_program;

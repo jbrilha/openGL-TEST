@@ -12,8 +12,8 @@
 
 class Bullet : public Projectile {
   public:
-    Bullet(glm::mat4 projection, glm::vec3 pos, glm::vec3 vel);
-    Bullet(glm::mat4 projection);
+    Bullet(glm::mat4 &projection, glm::vec3 pos, glm::vec3 vel);
+    Bullet(glm::mat4 &projection);
     ~Bullet() override;
 
   private:
