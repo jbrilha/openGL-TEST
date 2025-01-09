@@ -1,8 +1,8 @@
 #include "pyramid.hpp"
 
-Pyramid::Pyramid(glm::mat4 projection, glm::vec3 pos)
-    : Shape("shaders/cube_vert.glsl", "shaders/cube_frag.glsl", projection,
-            pos) {
+Pyramid::Pyramid(glm::mat4 &projection, bool &chase, glm::vec3 pos)
+    : Shape("shaders/cube_vert.glsl", "shaders/cube_frag.glsl", projection, pos,
+            chase) {
     set_shaders();
 }
 

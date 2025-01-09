@@ -12,7 +12,7 @@
 
 class Cube : public Shape {
   public:
-    Cube(glm::mat4 projection, glm::vec3 pos = glm::vec3(1.f));
+    Cube(glm::mat4 &projection, bool &chase, glm::vec3 pos = glm::vec3(1.f));
     ~Cube() override;
 
   private:

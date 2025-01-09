@@ -13,7 +13,7 @@
 class Shape {
   public:
     Shape(std::string vert_shader, std::string frag_shader,
-          glm::mat4 projection, glm::vec3 pos);
+          glm::mat4 &projection, glm::vec3 pos, bool &chase);
     virtual ~Shape() = default;
     void draw(const glm::mat4 &view);
 
@@ -25,13 +25,15 @@ class Shape {
     bool active;
 
   private:
+    bool &chase;
+
   protected:
     virtual void set_shaders() = 0;
     virtual void set_vertices() = 0;
     virtual void set_indices() = 0;
 
     glm::mat4 model;
-    glm::mat4 projection;
+    glm::mat4 &projection;
     glm::vec3 pos;
 
     Shader *shader_program;

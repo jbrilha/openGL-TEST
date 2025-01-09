@@ -36,11 +36,11 @@ void Game::run() {
 
     for (int i = 0; i < 10; i++) {
         glm::vec3 pos = cube_positions[i];
-        shapes.push_back(std::make_unique<Cube>(projection, pos));
+        shapes.push_back(std::make_unique<Cube>(projection, chase, pos));
         pos += glm::vec3(0.f, 1.f, 0.f);
-        shapes.push_back(std::make_unique<Pyramid>(projection, pos));
+        shapes.push_back(std::make_unique<Pyramid>(projection, chase, pos));
         pos += glm::vec3(0.f, 1.f, 0.f);
-        shapes.push_back(std::make_unique<Sphere>(projection, pos));
+        shapes.push_back(std::make_unique<Sphere>(projection, chase, pos));
     }
 
     for (int i = 0; i < 1000; i++) {
@@ -311,17 +311,20 @@ void Game::framebuffer_size_callback(GLFWwindow *window, int width,
     projection = glm::perspective(glm::radians(camera->zoom),
                                   (float)width / (float)height, near, far);
 
-    for (const auto &bull : projectiles) {
-        bull->set_projection(projection);
-    }
+    // made projection a ref in the objects instead might run into issues later
+    // with thread locks but for now makes sense
 
-    for (const auto &shape : shapes) {
-        shape->set_projection(projection);
-    }
+    // for (const auto &bull : projectiles) {
+    //     bull->set_projection(projection);
+    // }
 
-    for (const auto &world_obj : world_objs) {
-        world_obj->set_projection(projection);
-    }
+    // for (const auto &shape : shapes) {
+    //     shape->set_projection(projection);
+    // }
+
+    // for (const auto &world_obj : world_objs) {
+    //     world_obj->set_projection(projection);
+    // }
 }
 
 void Game::error_callback(int error, const char *description) {

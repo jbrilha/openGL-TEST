@@ -12,7 +12,7 @@
 
 class Sphere : public Shape {
   public:
-    Sphere(glm::mat4 projection, glm::vec3 pos = glm::vec3(1.f));
+    Sphere(glm::mat4 &projection, bool &chase, glm::vec3 pos = glm::vec3(1.f));
     ~Sphere() override;
 
   private:
