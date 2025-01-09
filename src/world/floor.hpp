@@ -6,7 +6,7 @@
 
 class Floor : public Scenery {
   public:
-    Floor(glm::mat4 projection);
+    Floor(glm::mat4 &projection);
     ~Floor() override;
 
   private:

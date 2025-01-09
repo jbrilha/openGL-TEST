@@ -13,7 +13,7 @@
 class Scenery {
   public:
     Scenery(std::string vert_shader, std::string frag_shader,
-            glm::mat4 projection);
+            glm::mat4 &projection);
     virtual ~Scenery() = default;
     void draw(const glm::mat4 &view);
 
@@ -25,7 +25,7 @@ class Scenery {
     virtual void set_shaders() = 0;
     virtual void set_vertices() = 0;
 
-    glm::mat4 projection;
+    glm::mat4 &projection;
     glm::mat4 model;
 
     Shader *shader_program;

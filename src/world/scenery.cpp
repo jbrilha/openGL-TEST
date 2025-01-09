@@ -1,7 +1,7 @@
 #include "scenery.hpp"
 
 Scenery::Scenery(std::string vert_shader, std::string frag_shader,
-                 glm::mat4 projection)
+                 glm::mat4 &projection)
     : projection(projection), model(glm::mat4(1.f)),
       shader_program(new Shader(vert_shader.c_str(), frag_shader.c_str())) {}
 
