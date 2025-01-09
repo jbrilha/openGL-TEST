@@ -11,32 +11,34 @@ project(test LANGUAGES C CXX VERSION 1.0.0)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/build/debug)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/debug)
 
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
 find_package(glfw3 3.3 REQUIRED)
 find_package(OpenGL REQUIRED)
 
-include_directories(
-    ${OPENGL_INCLUDE_DIR}
-    ${CMAKE_SOURCE_DIR}/includes
-    ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/src/shapes
-    ${CMAKE_SOURCE_DIR}/src/ui
-    ${CMAKE_SOURCE_DIR}/utils
-)
-
 add_subdirectory(includes)
 
 file(GLOB SOURCES_SRC "src/*.cpp")
-file(GLOB SOURCES_SHP "src/shapes/*.cpp")
-file(GLOB SOURCES_UI "src/ui/*.cpp")
+file(GLOB SOURCES_GAME "src/**/*.cpp")
 list(APPEND SOURCES ${SOURCES_SRC})
-list(APPEND SOURCES ${SOURCES_SHP})
-list(APPEND SOURCES ${SOURCES_UI})
+list(APPEND SOURCES ${SOURCES_GAME})
 
-add_executable(test ${SOURCES})
+add_executable(${PROJECT_NAME} ${SOURCES})
 
-target_link_libraries(test PRIVATE ${OpenGL_gl_LIBRARY} glfw glad)
+target_include_directories(${PROJECT_NAME}
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/src/world
+        ${CMAKE_SOURCE_DIR}/src/projectiles
+        ${CMAKE_SOURCE_DIR}/src/shapes
+        ${CMAKE_SOURCE_DIR}/src/ui
+    PUBLIC
+        ${OPENGL_INCLUDE_DIR}
+        ${CMAKE_SOURCE_DIR}/includes
+        ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_SOURCE_DIR}/utils
+)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenGL_gl_LIBRARY} glfw glad)
