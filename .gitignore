@@ -1,7 +1,7 @@
 .cache/
 bin/
 build/
-glad_permalink.txt
-triangle_main.cpp
 wip/
+*.txt
+!CMakeLists.txt
 .DS_Store
