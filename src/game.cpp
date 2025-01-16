@@ -1,5 +1,4 @@
 #include "game.hpp"
-#include <memory>
 
 Game::Game()
     : win_height(WIN_HEIGHT), win_width(WIN_WIDTH), delta_time(0.f),
@@ -245,13 +244,13 @@ void Game::key_callback(GLFWwindow *window, int key, int scancode, int action,
         camera->sprinting = !camera->sprinting;
     }
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
-        camera->jumping = true;
+        camera->set_stance(Stance::JUMP);
     }
     if (key == GLFW_KEY_C && action == GLFW_PRESS) {
-        camera->crouching = !camera->crouching;
+        camera->toggle_stance(Stance::CROUCH);
     }
     if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
-        camera->proning = !camera->proning;
+        camera->toggle_stance(Stance::PRONE);
     }
 
     if (key == GLFW_KEY_P && action == GLFW_PRESS)
@@ -276,19 +275,15 @@ void Game::process_input() {
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         camera->handle_keyboard(FORWARD, delta_time, glfwGetTime());
-        camera->moving = true;
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
         camera->handle_keyboard(LEFT, delta_time, glfwGetTime());
-        camera->moving = true;
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
         camera->handle_keyboard(BACKWARDS, delta_time, glfwGetTime());
-        camera->moving = true;
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
         camera->handle_keyboard(RIGHT, delta_time, glfwGetTime());
-        camera->moving = true;
     }
 
     // GLFW_RELEASE doesn't actually check for release action in this case,
