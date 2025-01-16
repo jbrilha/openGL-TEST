@@ -19,6 +19,7 @@ enum class Stance {
     FALL,
     CROUCH,
     PRONE,
+    NONE, // initialization
 };
 
 const float YAW = -90.f;
@@ -56,7 +57,7 @@ class Camera {
     bool sprinting = false;
 
   private:
-    static constexpr float SPRINT_VIEWBOB_FREQ = 15.f;
+    static constexpr float SPRINT_VIEWBOB_FREQ_MULTIPLIER = 1.1f;
     static constexpr float STAND_VIEWBOB_FREQ = 12.f;
     static constexpr float STAND_VIEWBOB_HEIGHT = 0.02f;
     static constexpr float CROUCH_VIEWBOB_FREQ = 10.f;
@@ -82,7 +83,6 @@ class Camera {
     float max_jump_height = default_eye_level + JUMP_HEIGHT_MODIFIER;
     float crouch_height = default_eye_level - CROUCH_HEIGHT_MODIFIER;
     float prone_height = default_eye_level - PRONE_HEIGHT_MODIFIER;
-    float sprint_speed = default_move_speed * SPRINT_SPEED_MULTIPLIER;
     float crouch_speed = default_move_speed * CROUCH_SPEED_MULTIPLIER;
     float prone_speed = default_move_speed * PRONE_SPEED_MULTIPLIER;
 

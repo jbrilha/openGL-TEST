@@ -1,9 +1,10 @@
 #include "camera.hpp"
 
 Camera::Camera(glm::vec3 position, glm::vec3 world_up, float yaw, float pitch)
-    : front(glm::vec3(0.f, 0.f, -1.f)), default_eye_level(position.y),
-      default_move_speed(SPEED), bob_frequency(15.f), bob_height(0.02f),
-      bob_amount(0.f), mouse_sens(SENS), zoom(ZOOM), stance(Stance::STAND) {
+    : front(glm::vec3(0.f, 0.f, -1.f)), zoom(ZOOM),
+      default_eye_level(position.y), default_move_speed(SPEED),
+      bob_frequency(15.f), bob_height(0.02f), bob_amount(0.f), mouse_sens(SENS),
+      stance(Stance::STAND), previous_stance(Stance::NONE) {
 
     this->position = position;
     this->world_up = world_up;
@@ -15,9 +16,10 @@ Camera::Camera(glm::vec3 position, glm::vec3 world_up, float yaw, float pitch)
 
 Camera::Camera(float pos_x, float pos_y, float pos_z, float world_up_x,
                float world_up_y, float world_up_z, float yaw, float pitch)
-    : front(glm::vec3(0.f, 0.f, -1.f)), default_eye_level(position.y),
-      default_move_speed(SPEED), bob_frequency(15.f), bob_height(0.02f),
-      bob_amount(0.f), mouse_sens(SENS), zoom(ZOOM), stance(Stance::STAND) {
+    : front(glm::vec3(0.f, 0.f, -1.f)), zoom(ZOOM),
+      default_eye_level(position.y), default_move_speed(SPEED),
+      bob_frequency(15.f), bob_height(0.02f), bob_amount(0.f), mouse_sens(SENS),
+      stance(Stance::STAND), previous_stance(Stance::NONE) {
 
     this->position = glm::vec3(pos_x, pos_y, pos_z);
     this->world_up = glm::vec3(world_up_x, world_up_y, world_up_z);
@@ -54,10 +56,12 @@ void Camera::set_stance(Stance stance) {
 }
 
 void Camera::toggle_stance(Stance toggle_stance) {
-    if (stance != Stance::JUMP && stance != Stance::FALL &&
-        stance != toggle_stance) {
+    if (stance != toggle_stance && stance != Stance::JUMP &&
+        stance != Stance::FALL) {
+        previous_stance = stance;
         stance = toggle_stance;
-    } else {
+    } else if (stance == toggle_stance) {
+        previous_stance = stance;
         stance = Stance::STAND;
     }
 }
@@ -85,6 +89,7 @@ void Camera::update_stance() {
             position.y = eye_level;
         } else {
             stance = previous_stance;
+            previous_stance = Stance::NONE;
         }
         break;
     case Stance::CROUCH:
@@ -108,13 +113,11 @@ void Camera::update_stance() {
 }
 
 void Camera::update_stance_modifiers() {
-
     switch (stance) {
     case Stance::CROUCH:
         bob_frequency = CROUCH_VIEWBOB_FREQ;
         bob_height = CROUCH_VIEWBOB_HEIGHT;
-        move_speed =
-            sprinting ? crouch_speed * SPRINT_SPEED_MULTIPLIER : crouch_speed;
+        move_speed = crouch_speed;
         break;
     case Stance::PRONE:
         bob_frequency = PRONE_VIEWBOB_FREQ;
@@ -123,14 +126,13 @@ void Camera::update_stance_modifiers() {
         break;
     default:
         bob_height = STAND_VIEWBOB_HEIGHT;
-        if (sprinting) {
-            bob_frequency = SPRINT_VIEWBOB_FREQ;
-            move_speed = default_move_speed * SPRINT_SPEED_MULTIPLIER;
-        } else {
-            bob_frequency = STAND_VIEWBOB_FREQ;
-            move_speed = default_move_speed;
-        }
+        bob_frequency = STAND_VIEWBOB_FREQ;
+        move_speed = default_move_speed;
         break;
+    }
+    if (sprinting) {
+        bob_frequency *= SPRINT_VIEWBOB_FREQ_MULTIPLIER;
+        move_speed *= SPRINT_SPEED_MULTIPLIER;
     }
 }
 
@@ -140,7 +142,9 @@ void Camera::move() {
     }
 
     update_stance();
-    update_stance_modifiers();
+    if (previous_stance != stance) {
+        update_stance_modifiers();
+    }
 
     // std::cout << "\r"
     //           << " x: " << position.x << std::setprecision(4) << std::fixed
