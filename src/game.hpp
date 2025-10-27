@@ -1,6 +1,7 @@
 #ifndef GAME_HPP
 #define GAME_HPP
 
+#include "light_source.hpp"
 #include "scenery.hpp"
 #define GLAD_GL_IMPLEMENTATION
 #include <glad/glad.h>
@@ -39,6 +40,7 @@ class Game {
     std::vector<std::unique_ptr<Shape>> shapes;
     std::vector<std::unique_ptr<Projectile>> projectiles;
     std::vector<std::unique_ptr<Scenery>> world_objs;
+    std::vector<std::unique_ptr<LightSource>> lights;
     void update_title_bar();
     int nb_frames;
     int last_time;

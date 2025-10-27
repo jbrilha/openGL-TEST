@@ -1,4 +1,7 @@
 #include "game.hpp"
+#include "light_source.hpp"
+#include "shaders.hpp"
+#include <memory>
 
 Game::Game()
     : win_height(WIN_HEIGHT), win_width(WIN_WIDTH), delta_time(0.f),
@@ -22,6 +25,8 @@ void Game::init() {
     cursor = new Cursor(window, 1, 5);
 }
 
+glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+
 void Game::run() {
     glm::vec3 cube_positions[] = {
         glm::vec3(5.0f, 6.0f, -3.0f), glm::vec3(2.0f, 5.0f, -15.0f),
@@ -32,14 +37,16 @@ void Game::run() {
     };
 
     world_objs.push_back(std::make_unique<Floor>(projection));
+    lights.push_back(
+        LightSource::from_shape<Pyramid>(projection, chase, lightPos));
 
     for (int i = 0; i < 10; i++) {
         glm::vec3 pos = cube_positions[i];
-        shapes.push_back(std::make_unique<Cube>(projection, chase, pos));
+        shapes.push_back(Cube::create_default(projection, chase, pos));
         pos += glm::vec3(0.f, 1.f, 0.f);
-        shapes.push_back(std::make_unique<Pyramid>(projection, chase, pos));
+        shapes.push_back(Pyramid::create_default(projection, chase, pos));
         pos += glm::vec3(0.f, 1.f, 0.f);
-        shapes.push_back(std::make_unique<Sphere>(projection, chase, pos));
+        shapes.push_back(Sphere::create_default(projection, chase, pos));
     }
 
     for (int i = 0; i < 1000; i++) {
@@ -65,6 +72,13 @@ void Game::run() {
 
         view = camera->get_view_matrix();
 
+        lightPos.x = 1.0f + sin(glfwGetTime()) * 2.0f;
+        lightPos.y = sin(glfwGetTime() / 2.0f) * 5.0f;
+
+        for (const auto &light : lights) {
+            light->draw(view, lightPos);
+        }
+
         if (shoot) { // just to test it out
             if (!projectiles[cb]->active) {
                 glm::vec3 inpos = camera->position + glm::vec3(0.f, -0.2f, 0.f);
@@ -88,7 +102,8 @@ void Game::run() {
                 if (!paused)
                     bull->update(delta_time);
 
-                bull->draw(view);
+                // bull->draw(view);
+                bull->draw_illuminated(view, camera->position, lightPos);
             }
         }
 
@@ -98,7 +113,8 @@ void Game::run() {
             if (track) {
                 shape->look_at(camera->position);
             }
-            shape->draw(view);
+            // shape->draw(view);
+            shape->draw_illuminated(view, camera->position, lightPos);
         }
 
         for (const auto &world_obj : world_objs) {
@@ -303,6 +319,7 @@ void Game::framebuffer_size_callback(GLFWwindow *window, int width,
     win_width = width;
     win_height = height;
 
+    std::cout << "what " << std::endl;
     projection = glm::perspective(glm::radians(camera->zoom),
                                   (float)width / (float)height, near, far);
 
