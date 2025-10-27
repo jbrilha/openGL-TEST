@@ -6,7 +6,7 @@ Floor::Floor(glm::mat4 &projection)
     set_shaders();
 }
 
-Floor::~Floor() { shader_program->del(); }
+Floor::~Floor() { delete shader_program; }
 
 void Floor::set_shaders() {
     shader_program->use();

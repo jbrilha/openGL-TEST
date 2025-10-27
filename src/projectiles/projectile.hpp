@@ -16,6 +16,8 @@ class Projectile {
                glm::mat4 &projection, glm::vec3 pos, glm::vec3 vel);
     virtual ~Projectile() = default;
     void draw(const glm::mat4 &view);
+    void draw_illuminated(const glm::mat4 &view, const glm::vec3 camera_pos,
+                          const glm::vec3 light_pos);
     void update(float d_time);
 
     void set_pos(glm::vec3 pos);

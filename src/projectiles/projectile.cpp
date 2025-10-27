@@ -29,6 +29,22 @@ void Projectile::draw(const glm::mat4 &view) {
     glBindVertexArray(0);
 }
 
+void Projectile::draw_illuminated(const glm::mat4 &view, const glm::vec3 camera_pos,const glm::vec3 light_pos) {
+    shader_program->use();
+    shader_program->set_vec3("object_color", 1.0f, 0.5f, 0.31f);
+    shader_program->set_vec3("light_color", 1.0f, 1.0f, 1.0f);
+    shader_program->set_vec3("light_pos", light_pos);
+    shader_program->set_vec3("view_pos", camera_pos);
+    shader_program->set_mat4("projection", this->projection);
+    shader_program->set_mat4("view", view);
+    shader_program->set_mat4("model", this->model);
+
+    glBindVertexArray(VAO);
+    glDrawElements(GL_TRIANGLES, indices.size() * sizeof(int), GL_UNSIGNED_INT,
+                   0);
+    glBindVertexArray(0);
+}
+
 void Projectile::set_projection(glm::mat4 projection) {
     this->projection = projection;
 }
