@@ -1,14 +1,49 @@
 #include "sphere.hpp"
 
+std::shared_ptr<Shader> Sphere::shared_shader = nullptr;
+
+std::unique_ptr<Sphere> Sphere::create_default(glm::mat4 &projection, bool &chase,
+                                           glm::vec3 pos) {
+    if (!shared_shader) {
+        shared_shader = std::make_shared<Shader>(
+            "shaders/lit_object_vert.glsl", "shaders/lit_object_frag.glsl");
+    }
+
+    return std::make_unique<Sphere>(shared_shader, projection, chase, pos);
+}
+
+std::unique_ptr<Sphere> Sphere::create_shaderless(glm::mat4 &projection,
+                                              bool &chase, glm::vec3 pos) {
+    return std::make_unique<Sphere>(projection, chase, pos);
+}
+
+std::unique_ptr<Sphere> Sphere::create_with_shader(std::shared_ptr<Shader> shader,
+                                               glm::mat4 &projection,
+                                               bool &chase, glm::vec3 pos) {
+    return std::make_unique<Sphere>(shader, projection, chase, pos);
+}
+
+std::unique_ptr<Sphere> Sphere::create_with_shader(std::string vert_shader,
+                                               std::string frag_shader,
+                                               glm::mat4 &projection,
+                                               bool &chase, glm::vec3 pos) {
+    std::shared_ptr<Shader> shader =
+        std::make_shared<Shader>(vert_shader.c_str(), frag_shader.c_str());
+    return std::make_unique<Sphere>(shader, projection, chase, pos);
+}
+
 Sphere::Sphere(glm::mat4 &projection, bool &chase, glm::vec3 pos)
-    : Shape("shaders/cube_vert.glsl", "shaders/cube_frag.glsl", projection,
-            pos, chase) {
+    : Shape(projection, pos, chase) {}
+
+Sphere::Sphere(std::shared_ptr<Shader> shader, glm::mat4 &projection, bool &chase,
+           glm::vec3 pos)
+    : Shape(shader, projection, pos, chase) {
     set_shaders();
 }
 
-Sphere::~Sphere() { shader_program->del(); }
+Sphere::~Sphere() {}
 
-void Sphere::set_shaders() {
+/* void Sphere::set_shaders() {
     shader_program->use();
     set_indices();
     set_vertices();
@@ -37,7 +72,7 @@ void Sphere::set_shaders() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glBindVertexArray(0);
-}
+} */
 
 void Sphere::set_indices() {
     for (int i = 0; i < stacks; ++i) {

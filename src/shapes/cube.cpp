@@ -1,43 +1,48 @@
 #include "cube.hpp"
+#include <memory>
+
+std::shared_ptr<Shader> Cube::shared_shader = nullptr;
+
+std::unique_ptr<Cube> Cube::create_default(glm::mat4 &projection, bool &chase,
+                                           glm::vec3 pos) {
+    if (!shared_shader) {
+        shared_shader = std::make_shared<Shader>(
+            "shaders/lit_object_vert.glsl", "shaders/lit_object_frag.glsl");
+    }
+
+    return std::make_unique<Cube>(shared_shader, projection, chase, pos);
+}
+
+std::unique_ptr<Cube> Cube::create_shaderless(glm::mat4 &projection,
+                                              bool &chase, glm::vec3 pos) {
+    return std::make_unique<Cube>(projection, chase, pos);
+}
+
+std::unique_ptr<Cube> Cube::create_with_shader(std::shared_ptr<Shader> shader,
+                                               glm::mat4 &projection,
+                                               bool &chase, glm::vec3 pos) {
+    return std::make_unique<Cube>(shader, projection, chase, pos);
+}
+
+std::unique_ptr<Cube> Cube::create_with_shader(std::string vert_shader,
+                                               std::string frag_shader,
+                                               glm::mat4 &projection,
+                                               bool &chase, glm::vec3 pos) {
+    std::shared_ptr<Shader> shader =
+        std::make_shared<Shader>(vert_shader.c_str(), frag_shader.c_str());
+    return std::make_unique<Cube>(shader, projection, chase, pos);
+}
 
 Cube::Cube(glm::mat4 &projection, bool &chase, glm::vec3 pos)
-    : Shape("shaders/cube_vert.glsl", "shaders/cube_frag.glsl", projection, pos,
-            chase) {
+    : Shape(projection, pos, chase) {}
+
+Cube::Cube(std::shared_ptr<Shader> shader, glm::mat4 &projection, bool &chase,
+           glm::vec3 pos)
+    : Shape(shader, projection, pos, chase) {
     set_shaders();
 }
 
-Cube::~Cube() { shader_program->del(); }
-
-void Cube::set_shaders() {
-    shader_program->use();
-    set_indices();
-    set_vertices();
-
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3),
-                 vertices.data(), GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(int),
-                 indices.data(), GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
-                          (void *)0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
-    glEnableVertexAttribArray(1);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    glBindVertexArray(0);
-}
+Cube::~Cube() {}
 
 void Cube::set_indices() {
     indices = {
@@ -48,14 +53,14 @@ void Cube::set_indices() {
 
 void Cube::set_vertices() {
     vertices = {
-        glm::vec3(0.5f, 0.5f, -0.5f),   // back top right
-        glm::vec3(0.5f, -0.5f, -0.5f),  // back bot right
-        glm::vec3(-0.5f, -0.5f, -0.5f), // back bot left
-        glm::vec3(-0.5f, 0.5f, -0.5f),  // back top left
+        glm::vec3(0.5f, 0.5f, -0.5f),   // 0 - back top right
+        glm::vec3(0.5f, -0.5f, -0.5f),  // 1 - back bot right
+        glm::vec3(-0.5f, -0.5f, -0.5f), // 2 - back bot left
+        glm::vec3(-0.5f, 0.5f, -0.5f),  // 3 - back top left
 
-        glm::vec3(0.5f, 0.5f, 0.5f),   // front top right
-        glm::vec3(0.5f, -0.5f, 0.5f),  // front bot right
-        glm::vec3(-0.5f, -0.5f, 0.5f), // front bot left
-        glm::vec3(-0.5f, 0.5f, 0.5f),  // front top left
+        glm::vec3(0.5f, 0.5f, 0.5f),   // 4 - front top right
+        glm::vec3(0.5f, -0.5f, 0.5f),  // 5 - front bot right
+        glm::vec3(-0.5f, -0.5f, 0.5f), // 6 - front bot left
+        glm::vec3(-0.5f, 0.5f, 0.5f),  // 7 - front top left
     };
 }
