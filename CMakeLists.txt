@@ -33,6 +33,7 @@ target_include_directories(${PROJECT_NAME}
         ${CMAKE_SOURCE_DIR}/src/world
         ${CMAKE_SOURCE_DIR}/src/projectiles
         ${CMAKE_SOURCE_DIR}/src/shapes
+        ${CMAKE_SOURCE_DIR}/src/lighting
         ${CMAKE_SOURCE_DIR}/src/ui
     PUBLIC
         ${OPENGL_INCLUDE_DIR}
