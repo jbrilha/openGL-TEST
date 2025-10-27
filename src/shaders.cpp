@@ -56,6 +56,8 @@ void Shader::use() { glUseProgram(program_ID); }
 
 void Shader::del() { glDeleteProgram(program_ID); }
 
+Shader::~Shader() { del(); }
+
 void Shader::set_bool(const std::string &name, bool value) const {
     glUniform1i(glGetUniformLocation(program_ID, name.c_str()), (int)value);
 }
@@ -76,7 +78,8 @@ void Shader::set_vec2(const std::string &name, const glm::vec2 &value) const {
     glUniform2fv(glGetUniformLocation(program_ID, name.c_str()), 1, &value[0]);
 }
 
-void Shader::set_vec3(const std::string &name, float x, float y, float z) const {
+void Shader::set_vec3(const std::string &name, float x, float y,
+                      float z) const {
     glUniform3f(glGetUniformLocation(program_ID, name.c_str()), x, y, z);
 }
 
@@ -85,7 +88,7 @@ void Shader::set_vec3(const std::string &name, const glm::vec3 &value) const {
 }
 
 void Shader::set_vec4(const std::string &name, float x, float y, float z,
-              float w) const {
+                      float w) const {
     glUniform4f(glGetUniformLocation(program_ID, name.c_str()), x, y, z, w);
 }
 
